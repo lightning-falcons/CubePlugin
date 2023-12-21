@@ -27,7 +27,7 @@ void ADynamicGameState::BeginPlay()
 	ClockTime = 0;
 	ScanIndex = 0;
 
-	ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
+	// ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
 	
 	const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\TransformedCloud_Cudal.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\colour.las");
@@ -45,16 +45,14 @@ void ADynamicGameState::BeginPlay()
 	GlobalMapActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
 	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.25;
 
-	
+	// Now we need to import the local maps
 	FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
 	FString filesStartingWith = TEXT("");
 	FString fileExtensions = TEXT("las");
 
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *fileExtensions);
 
-
-
-
+	// Get all the las files
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
 	// This is for optional skipping of files
@@ -169,47 +167,6 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 
 void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation )
 {
-	UE_LOG(LogTemp, Warning, TEXT("The number of points in GlobalMap Octree is %i"), GlobalMap->GetNumVisiblePoints());
-	
-	FColor AppliedColor = FColor(250, 0, 0, 100);
-	bool ApplyLimited = false;
-	//GlobalMap->ApplyColorToAllPoints(AppliedColor, ApplyLimited);
-	GlobalMap->RefreshRendering();
-	GlobalMap->LoadAllNodes();
-	UE_LOG(LogTemp, Warning, TEXT("FULLY LOADED: %i"), GlobalMap->IsFullyLoaded());
-
-	
-	if (GlobalMap->GetNumPoints() > 10000)
-	{
-		int counter = 0;
-
-		//GlobalMap->GetPoints(Points, 0, GlobalMap->GetNumPoints());
-		GlobalMap->GetPoints(Points);
-
-		
-		for (auto it : Points)
-		{
-			//it->Color.R = 255;
-			//it->Color.A = 100;
-
-			if (counter == 1000)
-			{
-				UE_LOG(LogTemp, Warning, TEXT("The red channel after setting it to 255 is %i"), it->Color.R);
-			}
-
-			counter += 1;
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("The red channel is %i"), Points[1000]->Color.R);
-
-		//GlobalMap->SetData(Points);
-
-		
-
-		Points.Empty();
-
-	}
-
 	
 	// Set the point clouds first
 	GlobalMapActor->SetPointCloud(GlobalMap);
@@ -226,5 +183,32 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	// Set the location and rotation of the local point cloud
 	// The LIDAR point cloud is shifted 150 CM up from the character so it aligns with the global point cloud
 	DynamicActor->SetActorLocationAndRotation(CharacterLocation + FVector(0.0, 0.0, 150.0), LocalRotation, false, 0, ETeleportType::None);	
+
+}
+
+void ADynamicGameState::SetColor(FColor AppliedColor, ULidarPointCloud* Map)
+{
+	// Set colour for visible points only
+	bool ApplyLimited = false;
+
+	// Apply the colour
+	GlobalMap->ApplyColorToAllPoints(AppliedColor, ApplyLimited);
+
+	// Get the individual points
+	GlobalMap->GetPoints(Points);
+
+	// Iterate through the points
+	for (auto it : Points)
+	{
+
+		// Apply the colour to each point
+		it->Color = AppliedColor;
+
+	}
+
+	// Clear the points array
+	Points.Empty();
+
+	
 
 }

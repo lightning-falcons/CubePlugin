@@ -57,6 +57,7 @@ private:
 	TArray< ULidarPointCloud* > LoadedPointClouds;
 	ULidarPointCloud* GlobalMap;
 	TArray<FLidarPointCloudPoint*> Points;
+	void SetColor(FColor AppliedColor, ULidarPointCloud* Map);
 
 
 };
