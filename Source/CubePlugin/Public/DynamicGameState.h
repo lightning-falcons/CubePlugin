@@ -49,13 +49,13 @@ public:
 private:
 
 	TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
-	ALidarPointCloudActor* KatoombaActor;
+	ALidarPointCloudActor* GlobalMapActor;
 	ALidarPointCloudActor* DynamicActor;
 	float ClockTime;
 	int ScanIndex; // Scan number to display
 	TArray<FString> filesInDirectory;
 	TArray< ULidarPointCloud* > LoadedPointClouds;
-	ULidarPointCloud* Katoomba;
+	ULidarPointCloud* GlobalMap;
 	TArray<FLidarPointCloudPoint*> Points;
 
 

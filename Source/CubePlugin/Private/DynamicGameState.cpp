@@ -35,51 +35,51 @@ void ADynamicGameState::BeginPlay()
 
 	
 
-	//KatoombaActor = Cast<ALidarPointCloudActor>(GEditor->AddActor(Level, ALidarPointCloudActor::StaticClass(), FTransform()));
-	KatoombaActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor( ALidarPointCloudActor::StaticClass() ));
+	//GlobalMapActor = Cast<ALidarPointCloudActor>(GEditor->AddActor(Level, ALidarPointCloudActor::StaticClass(), FTransform()));
+	GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor( ALidarPointCloudActor::StaticClass() ));
 	DynamicActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 
-
-	Katoomba = ULidarPointCloud::CreateFromFile(PathToFile);
+	// Create the Global Map
+	GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
 
 	
 
-	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (Katoomba->OriginalCoordinates).X, (Katoomba->OriginalCoordinates).Y, (Katoomba->OriginalCoordinates).Z);
+	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
 
 
 
-	//KatoombaActor->SetPointCloud(Katoomba);
+	//GlobalMapActor->SetPointCloud(GlobalMap);
 
-	//KatoombaActor->SetActorLocation(Katoomba->OriginalCoordinates);
+	//GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
 	
-	//KatoombaActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
-	// Katoomba->RestoreOriginalCoordinates();
+	//GlobalMapActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
+	// GlobalMap->RestoreOriginalCoordinates();
 
 
-	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (Katoomba->OriginalCoordinates).X, (Katoomba->OriginalCoordinates).Y, (Katoomba->OriginalCoordinates).Z);
+	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
 
 
-	// KatoombaActor->SetActorLocation(Katoomba->OriginalCoordinates);
-	//KatoombaActor->SetActorLocation(FVector(48603.000000, -7325.000000, 1544.500000));
+	// GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
+	//GlobalMapActor->SetActorLocation(FVector(48603.000000, -7325.000000, 1544.500000));
 
-	//UE_LOG(LogTemp, Warning, TEXT(" Centered %d "), Katoomba->IsCentered());
-
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (Katoomba->OriginalCoordinates).X, (Katoomba->OriginalCoordinates).Y, (Katoomba->OriginalCoordinates).Z);
-
-	KatoombaActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
-	KatoombaActor->GetPointCloudComponent()->PointSize = 0.25;
-
-	//Katoomba->RestoreOriginalCoordinates();
+	//UE_LOG(LogTemp, Warning, TEXT(" Centered %d "), GlobalMap->IsCentered());
 
 
-	//UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (Katoomba->OriginalCoordinates).X, (Katoomba->OriginalCoordinates).Y, (Katoomba->OriginalCoordinates).Z);
 
-	//KatoombaActor->SetActorLocation(Katoomba->OriginalCoordinates);
+	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
 
-	//KatoombaActor->GetPointCloudComponent()->ElevationColorBottom = FLinearColor(FColor(255, 0, 0));
-	//KatoombaActor->GetPointCloudComponent()->ElevationColorTop = FLinearColor(FColor(0, 255, 0));
+	GlobalMapActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
+	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.25;
+
+	//GlobalMap->RestoreOriginalCoordinates();
+
+
+	//UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
+
+	//GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
+
+	//GlobalMapActor->GetPointCloudComponent()->ElevationColorBottom = FLinearColor(FColor(255, 0, 0));
+	//GlobalMapActor->GetPointCloudComponent()->ElevationColorTop = FLinearColor(FColor(0, 255, 0));
 
 	
 	
@@ -137,11 +137,11 @@ void ADynamicGameState::BeginPlay()
 
 
 
-	//UE_LOG(LogTemp, Warning, TEXT("ACTOR LOC %lf"), Katoomba->OriginalCoordinates[2]);
+	//UE_LOG(LogTemp, Warning, TEXT("ACTOR LOC %lf"), GlobalMap->OriginalCoordinates[2]);
 
 	TArray< ULidarPointCloud* > LoadedPointCloudsCombined;
 	LoadedPointCloudsCombined = LoadedPointClouds;
-	LoadedPointCloudsCombined.Add(Katoomba);
+	LoadedPointCloudsCombined.Add(GlobalMap);
 
 
 	//ULidarPointCloud::AlignClouds(LoadedPointClouds);
@@ -200,8 +200,8 @@ TArray<FString> ADynamicGameState::GetAllFilesInDirectory(const FString director
 void ADynamicGameState::Tick( float DeltaSeconds )
 {
 	
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), KatoombaActor->GetPointCloudComponent()->IntensityInfluence);
-	//KatoombaActor->GetPointCloudComponent()->IntensityInfluence -= 0.01 * DeltaSeconds;
+	//UE_LOG(LogTemp, Warning, TEXT("%f"), GlobalMapActor->GetPointCloudComponent()->IntensityInfluence);
+	//GlobalMapActor->GetPointCloudComponent()->IntensityInfluence -= 0.01 * DeltaSeconds;
 
 	ClockTime += DeltaSeconds;
 
@@ -214,7 +214,7 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 
 		ClockTime = 0;
 
-		//KatoombaActor->Destroy();
+		//GlobalMapActor->Destroy();
 
 		ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
 
@@ -224,14 +224,14 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 		UE_LOG(LogTemp, Warning, TEXT("DISPLAYING: %s"), *PathToFile);
 
 
-		//ULidarPointCloud* Katoomba = ULidarPointCloud::CreateFromFile(PathToFile);
+		//ULidarPointCloud* GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
 
 
-		//KatoombaActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
+		//GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 		//DynamicActor->SetPointCloud(LoadedPointClouds[ScanIndex]);
 		//DynamicActor->SetActorLocation(LoadedPointClouds[ScanIndex]->OriginalCoordinates + FVector(0, 0, 1500));
 
-		//KatoombaActor->GetPointCloudComponent()->IntensityInfluence = 1;
+		//GlobalMapActor->GetPointCloudComponent()->IntensityInfluence = 1;
 
 
 
@@ -246,22 +246,22 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 
 void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation )
 {
-	UE_LOG(LogTemp, Warning, TEXT("The number of points in Katoomba Octree is %i"), Katoomba->GetNumVisiblePoints());
+	UE_LOG(LogTemp, Warning, TEXT("The number of points in GlobalMap Octree is %i"), GlobalMap->GetNumVisiblePoints());
 	
 	FColor AppliedColor = FColor(250, 0, 0, 100);
 	bool ApplyLimited = false;
-	//Katoomba->ApplyColorToAllPoints(AppliedColor, ApplyLimited);
-	Katoomba->RefreshRendering();
-	Katoomba->LoadAllNodes();
-	UE_LOG(LogTemp, Warning, TEXT("FULLY LOADED: %i"), Katoomba->IsFullyLoaded());
+	//GlobalMap->ApplyColorToAllPoints(AppliedColor, ApplyLimited);
+	GlobalMap->RefreshRendering();
+	GlobalMap->LoadAllNodes();
+	UE_LOG(LogTemp, Warning, TEXT("FULLY LOADED: %i"), GlobalMap->IsFullyLoaded());
 
 	
-	if (Katoomba->GetNumPoints() > 10000)
+	if (GlobalMap->GetNumPoints() > 10000)
 	{
 		int counter = 0;
 
-		//Katoomba->GetPoints(Points, 0, Katoomba->GetNumPoints());
-		Katoomba->GetPoints(Points);
+		//GlobalMap->GetPoints(Points, 0, GlobalMap->GetNumPoints());
+		GlobalMap->GetPoints(Points);
 
 		
 		for (auto it : Points)
@@ -279,7 +279,7 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 
 		UE_LOG(LogTemp, Warning, TEXT("The red channel is %i"), Points[1000]->Color.R);
 
-		//Katoomba->SetData(Points);
+		//GlobalMap->SetData(Points);
 
 		
 
@@ -288,15 +288,15 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	}
 
 	
-	KatoombaActor->SetPointCloud(Katoomba);
-	//KatoombaActor->SetActorLocation(Katoomba->OriginalCoordinates);
-	//Katoomba->RestoreOriginalCoordinates();
+	GlobalMapActor->SetPointCloud(GlobalMap);
+	//GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
+	//GlobalMap->RestoreOriginalCoordinates();
 
 	DynamicActor->SetPointCloud(LoadedPointClouds[Index]);
 
 
 	LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates);
-	Katoomba->SetLocationOffset(Katoomba->OriginalCoordinates);
+	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
 	DynamicActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
 	DynamicActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::None;
@@ -310,11 +310,11 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	//LoadedPointClouds[Index]->SetLocationOffset(CharacterLocation);
 
 	//TArray< ULidarPointCloud* > PointCloudsToAlign;
-	//PointCloudsToAlign.Add(Katoomba);
+	//PointCloudsToAlign.Add(GlobalMap);
 	//PointCloudsToAlign.Add(LoadedPointClouds[Index]);
 
 	UE_LOG(LogTemp, Warning, TEXT("Original coords DYNAMIC %lf %lf %lf "), (LoadedPointClouds[Index]->OriginalCoordinates).X, (LoadedPointClouds[Index]->OriginalCoordinates).Y, (LoadedPointClouds[Index]->OriginalCoordinates).Z);
-	UE_LOG(LogTemp, Warning, TEXT("Original coords STATIC %lf %lf %lf "), (Katoomba->OriginalCoordinates).X, (Katoomba->OriginalCoordinates).Y, (Katoomba->OriginalCoordinates).Z);
+	UE_LOG(LogTemp, Warning, TEXT("Original coords STATIC %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
 
 
 	
