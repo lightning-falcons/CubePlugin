@@ -204,7 +204,7 @@ void AVrCharacter::BeginPlay()
 	ScanIndex = 0;
 
 	
-
+	Odometry = ADynamicGameState::ExtractEvery(Odometry, 5, 100);
 
 	
 }

@@ -46,6 +46,27 @@ public:
 	void Tick( float DeltaSeconds );
 	void LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation);
 
+	template <typename T>
+	static TArray<T> ExtractEvery(TArray<T> Array, int Per, int MaxLength = -1)
+	{
+		TArray<T> ExtractArray;
+
+		for (int i = 0; i < Array.Num(); i++)
+		{
+			if (ExtractArray.Num() == MaxLength)
+			{
+				break;
+			}
+
+			if (i % Per == 0)
+			{
+				ExtractArray.Add(Array[i]);
+			}
+		}
+
+		return ExtractArray;
+	}
+
 private:
 
 	TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
@@ -58,6 +79,8 @@ private:
 	ULidarPointCloud* GlobalMap;
 	TArray<FLidarPointCloudPoint*> Points;
 	void SetColor(FColor AppliedColor, ULidarPointCloud* Map);
+
+
 
 
 };

@@ -11,13 +11,9 @@
 ADynamicGameState::ADynamicGameState()
 {
 	
-	
 	PrimaryActorTick.bCanEverTick = true;
-
 	PrimaryActorTick.bStartWithTickEnabled = true;
-	UE_LOG(LogTemp, Warning, TEXT("AAAAAAAAAAAAAAAAAAAA"));
 
-	
 }
 
 void ADynamicGameState::BeginPlay()
@@ -50,61 +46,17 @@ void ADynamicGameState::BeginPlay()
 	FString filesStartingWith = TEXT("");
 	FString fileExtensions = TEXT("las");
 
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *fileExtensions);
-
 	// Get all the las files
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
-	// This is for optional skipping of files
-	int SampleEvery = 1;
-	int SampleCounter = 1;
-	int MaxLoading = 300;
-	int CurrentLoading = 0;
+	// Select every nth file, limit to m files
+	filesInDirectory = ExtractEvery(filesInDirectory, 5, 100);
 
+	// Load each point cloud
 	for (auto it : filesInDirectory)
 	{
-		CurrentLoading += 1;
 		LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(it));
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *it);
-
-		if (CurrentLoading == MaxLoading)
-		{
-			break;
-		}
-		/*
-		if (SampleCounter == SampleEvery) 
-		{
-			LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(it));
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *it);
-			
-			SampleCounter = 1;
-			CurrentLoading += 1;
-		}
-		else 
-		{
-			SampleCounter += 1;
-		}
-
-		if (CurrentLoading == MaxLoading)
-		{
-			break;
-		}
-
-		*/
-		
 	}
-
-
-
-
-	//UE_LOG(LogTemp, Warning, TEXT("ACTOR LOC %lf"), GlobalMap->OriginalCoordinates[2]);
-
-	TArray< ULidarPointCloud* > LoadedPointCloudsCombined;
-	LoadedPointCloudsCombined = LoadedPointClouds;
-	LoadedPointCloudsCombined.Add(GlobalMap);
-
-
-	//ULidarPointCloud::AlignClouds(LoadedPointClouds);
 
 }
 
@@ -208,7 +160,5 @@ void ADynamicGameState::SetColor(FColor AppliedColor, ULidarPointCloud* Map)
 
 	// Clear the points array
 	Points.Empty();
-
-	
 
 }
