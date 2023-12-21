@@ -97,14 +97,11 @@ template <typename T> struct is_int {
 // Sets default values
 AVrCharacter::AVrCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Set this character to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Create the camera
-	//Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	//Camera->SetupAttachment(GetMesh());
-
-	//Create our components
+	//Create our camera and associated components
+	// Need to create the spring arm, otherwise camera does not rotate properly
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	StaticMeshComp = CreateDefaultSubobject <UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
@@ -120,24 +117,10 @@ AVrCharacter::AVrCharacter()
 	SpringArmComp->bEnableCameraLag = true;
 	SpringArmComp->CameraLagSpeed = 3.0f;
 
-	//CameraComp->bUsePawnControlRotation = true;
-	//(Cast<UCharacterMovementComponent>(GetMovementComponent()))->bUseControllerDesiredRotation = false;
+	// Should give control over the rotation more to the character themselves
+	// However this doesn't work completely
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-
-
-
-	//AutoPossessPlayer = EAutoReceiveInput::Player0;
-
-	/*
-
-
-	if (APlayerController* PlayerCharacterController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s"), "FOUND A PLAYER CONTROLLER");
-		float CameraBlendTime = 1.0f;
-		PlayerCharacterController->SetViewTargetWithBlend(PlayerCharacterController->GetPawn(), CameraBlendTime, EViewTargetBlendFunction::VTBlend_Linear);
-	}*/
 
 }
 
@@ -169,7 +152,7 @@ void AVrCharacter::BeginPlay()
 	std::stringstream ss;
 	ss << source.rdbuf();
 
-
+	// This assumes a particular csv file format
 	while (csv_istream(ss)
 		>> col >> time >> x >> y >> z >> a >> b >> c) {
 		//...do something with the record...
@@ -230,25 +213,31 @@ void AVrCharacter::BeginPlay()
 void AVrCharacter::Tick(float DeltaTime)
 {
 
+	// This can be toggled to determine whether the camera should 
+	// be always in the direction of travel or should be controlled
+	// by the VR HMD
 	bool VROn = true;
-
 
 	Super::Tick(DeltaTime);
 
+	// Local tracking of passed time
 	ClockTime += DeltaTime;
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), ClockTime);
 
 	UE_LOG(LogTemp, Warning, TEXT("There are %i odometry readings"), Odometry.Num());
 
+	// This is a temporary feature where we move a frame every 0.1 s.
 	if (ClockTime > 0.1 && ScanIndex < 299)
 	{
+
+		// The Character should be set at the location PLUS 180 cm so they appear above the ground
 		SetActorLocation(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 180.0));
 
 		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
 
 		
-
+		// The clocktime is re-set
 		ClockTime = 0;
 
 		/*
@@ -265,40 +254,29 @@ void AVrCharacter::Tick(float DeltaTime)
 
 		UE_LOG(LogTemp, Warning, TEXT("The index of this scan: %i"), ScanIndex);
 
-
+		// Get the rotator, which describes the orientation of the character should face
 		FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
 
+		// The local scan is loaded with the same position and orientation as the character
 		GetWorld()->GetGameState<ADynamicGameState>()->LoadNext(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
 
-		/*
-		if (rot.Pitch < 0)
-		{
-			rot.Pitch += 360;
-		}
 
-		if (rot.Roll < 0)
-		{
-			rot.Roll += 360;
-		}
-
-		if (rot.Yaw < 0)
-		{
-			rot.Yaw += 360;
-		}
-		*/
 
 		UE_LOG(LogTemp, Warning, TEXT("%lf %lf %lf"), rot.Yaw, rot.Pitch, rot.Roll);
 
 		
 		//SetActorLocationAndRotation(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), rot);
 		
-		// ENABLE THE NEXT TWO LINES FOR SETTING AUTO-ROTATION
+		// If the VR is off, then we need to set the orientation of the character
 		if (!VROn)
 		{
+			// We set it both directly and using the player controller
+			// Need to do this to ensure all roll, pitch and yaw values are indeed set
 			SetActorRotation(rot);
 			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(rot);
 		}
 
+		// Iterate to the next frame
 		ScanIndex += 1;
 
 	}
@@ -311,12 +289,16 @@ void AVrCharacter::Tick(float DeltaTime)
 	// Headset
 	
 
+	// If the VR mode is on, the orientation should always be in the direction of the HMD
 	if (VROn)
 	{
+
+		// Get the HMD orientation
 		FQuat hmdRotation;
 		FVector hmdLocationOffset;
 		GEngine->XRSystem->GetCurrentPose(IXRTrackingSystem::HMDDeviceId, hmdRotation, hmdLocationOffset);
 
+		// Set the orientation of the character
 		SetActorRotation(hmdRotation);
 		UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
 	}
