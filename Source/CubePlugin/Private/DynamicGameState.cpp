@@ -33,57 +33,19 @@ void ADynamicGameState::BeginPlay()
 	//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\colour.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\cudal_short_parsed.las");
 
-	
 
-	//GlobalMapActor = Cast<ALidarPointCloudActor>(GEditor->AddActor(Level, ALidarPointCloudActor::StaticClass(), FTransform()));
+	// Create an actor for the global and local maps
 	GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor( ALidarPointCloudActor::StaticClass() ));
 	DynamicActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 
-	// Create the Global Map
+	// Create the Global Map Point Cloud from the file
 	GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
 
-	
-
-	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
-
-
-
-	//GlobalMapActor->SetPointCloud(GlobalMap);
-
-	//GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
-	
-	//GlobalMapActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
-	// GlobalMap->RestoreOriginalCoordinates();
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
-
-
-	// GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
-	//GlobalMapActor->SetActorLocation(FVector(48603.000000, -7325.000000, 1544.500000));
-
-	//UE_LOG(LogTemp, Warning, TEXT(" Centered %d "), GlobalMap->IsCentered());
-
-
-
-	UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
-
+	// Specify that the global point cloud should be displayed with colour source from data and with the particular point size
 	GlobalMapActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
 	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.25;
 
-	//GlobalMap->RestoreOriginalCoordinates();
-
-
-	//UE_LOG(LogTemp, Warning, TEXT("Original coords %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
-
-	//GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
-
-	//GlobalMapActor->GetPointCloudComponent()->ElevationColorBottom = FLinearColor(FColor(255, 0, 0));
-	//GlobalMapActor->GetPointCloudComponent()->ElevationColorTop = FLinearColor(FColor(0, 255, 0));
-
 	
-	
-
 	FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
 	FString filesStartingWith = TEXT("");
 	FString fileExtensions = TEXT("las");
@@ -199,48 +161,9 @@ TArray<FString> ADynamicGameState::GetAllFilesInDirectory(const FString director
 
 void ADynamicGameState::Tick( float DeltaSeconds )
 {
-	
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), GlobalMapActor->GetPointCloudComponent()->IntensityInfluence);
-	//GlobalMapActor->GetPointCloudComponent()->IntensityInfluence -= 0.01 * DeltaSeconds;
 
-	ClockTime += DeltaSeconds;
-
-	//UE_LOG(LogTemp, Warning, TEXT("%f"), ClockTime);
-
-
-	if (ClockTime > 0.1 && ScanIndex < filesInDirectory.Num())
-	{
-
-
-		ClockTime = 0;
-
-		//GlobalMapActor->Destroy();
-
-		ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
-
-		//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\TransformedCloud_katoomba2.las");
-		const FString PathToFile = filesInDirectory[ScanIndex];
-
-		UE_LOG(LogTemp, Warning, TEXT("DISPLAYING: %s"), *PathToFile);
-
-
-		//ULidarPointCloud* GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
-
-
-		//GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
-		//DynamicActor->SetPointCloud(LoadedPointClouds[ScanIndex]);
-		//DynamicActor->SetActorLocation(LoadedPointClouds[ScanIndex]->OriginalCoordinates + FVector(0, 0, 1500));
-
-		//GlobalMapActor->GetPointCloudComponent()->IntensityInfluence = 1;
-
-
-
-		ScanIndex += 1;
-	}
-	else if (filesInDirectory.Num() == ScanIndex)
-	{
-		ScanIndex = 0;
-	}
+	// The GameState itself doesn't actually do anything on each tick
+	// Instead, the VRCharacter controls what is displayed
 	
 }
 
@@ -288,35 +211,20 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	}
 
 	
+	// Set the point clouds first
 	GlobalMapActor->SetPointCloud(GlobalMap);
-	//GlobalMapActor->SetActorLocation(GlobalMap->OriginalCoordinates);
-	//GlobalMap->RestoreOriginalCoordinates();
-
 	DynamicActor->SetPointCloud(LoadedPointClouds[Index]);
 
-
+	// THEN, set the locations of the point clouds using OFFSET
 	LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates);
 	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
+	// Set the parameters for the local point cloud
 	DynamicActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
 	DynamicActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::None;
 	
-	//DynamicActor->SetActorLocation(LoadedPointClouds[Index]->OriginalCoordinates + CharacterLocation);
-	//DynamicActor->AddActorLocalRotation(LocalRotation);
-
-	DynamicActor->SetActorLocationAndRotation(CharacterLocation + FVector(0.0, 0.0, 150.0), LocalRotation, false, 0, ETeleportType::None);
-	
-	//LoadedPointClouds[Index]->RestoreOriginalCoordinates();
-	//LoadedPointClouds[Index]->SetLocationOffset(CharacterLocation);
-
-	//TArray< ULidarPointCloud* > PointCloudsToAlign;
-	//PointCloudsToAlign.Add(GlobalMap);
-	//PointCloudsToAlign.Add(LoadedPointClouds[Index]);
-
-	UE_LOG(LogTemp, Warning, TEXT("Original coords DYNAMIC %lf %lf %lf "), (LoadedPointClouds[Index]->OriginalCoordinates).X, (LoadedPointClouds[Index]->OriginalCoordinates).Y, (LoadedPointClouds[Index]->OriginalCoordinates).Z);
-	UE_LOG(LogTemp, Warning, TEXT("Original coords STATIC %lf %lf %lf "), (GlobalMap->OriginalCoordinates).X, (GlobalMap->OriginalCoordinates).Y, (GlobalMap->OriginalCoordinates).Z);
-
-
-	
+	// Set the location and rotation of the local point cloud
+	// The LIDAR point cloud is shifted 150 CM up from the character so it aligns with the global point cloud
+	DynamicActor->SetActorLocationAndRotation(CharacterLocation + FVector(0.0, 0.0, 150.0), LocalRotation, false, 0, ETeleportType::None);	
 
 }
