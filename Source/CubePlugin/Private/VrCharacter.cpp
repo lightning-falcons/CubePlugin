@@ -172,6 +172,7 @@ void AVrCharacter::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT(" %lf "), time);
 	}
 
+	// This is for the import of the quarternion, but is done incorrectly
 	/*
 
 	for (std::string line; std::getline(source, line, ','); )   //read stream line by line
@@ -204,7 +205,7 @@ void AVrCharacter::BeginPlay()
 	ScanIndex = 0;
 
 	
-	Odometry = ADynamicGameState::ExtractEvery(Odometry, 5, 100);
+	Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 
 	
 }
@@ -216,7 +217,11 @@ void AVrCharacter::Tick(float DeltaTime)
 	// This can be toggled to determine whether the camera should 
 	// be always in the direction of travel or should be controlled
 	// by the VR HMD
-	bool VROn = true;
+	bool VROn = false;
+
+	// This can be toggled to determine whether HMD direction should set
+	// relative or absolute orientation
+	bool RelativeOrientation = true;
 
 	Super::Tick(DeltaTime);
 
@@ -300,7 +305,15 @@ void AVrCharacter::Tick(float DeltaTime)
 
 		// Set the orientation of the character
 		SetActorRotation(hmdRotation);
-		UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
+		if (RelativeOrientation)
+		{
+			FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot);
+		}
+		else
+		{
+			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
+		}
 	}
 
 

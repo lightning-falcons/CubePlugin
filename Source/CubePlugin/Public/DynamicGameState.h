@@ -28,6 +28,8 @@
 #include "LidarPointCloudComponent.h"
 #include "LidarPointCloudShared.h"
 #include "Misc/LocalTimestampDirectoryVisitor.h"
+#include "Runtime/Landscape/Classes/Landscape.h"
+#include "Runtime/Landscape/Classes/LandscapeStreamingProxy.h"
 #include "DynamicGameState.generated.h"
 
 /**

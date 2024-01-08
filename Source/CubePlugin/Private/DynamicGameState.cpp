@@ -50,13 +50,24 @@ void ADynamicGameState::BeginPlay()
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
 	// Select every nth file, limit to m files
-	filesInDirectory = ExtractEvery(filesInDirectory, 5, 100);
+	filesInDirectory = ExtractEvery(filesInDirectory, 3, 299);
 
 	// Load each point cloud
 	for (auto it : filesInDirectory)
 	{
 		LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(it));
 	}
+
+	// Search for all landscape components
+	TArray<AActor*> FoundLandscapeStreamingProxy;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALandscapeStreamingProxy::StaticClass(), FoundLandscapeStreamingProxy);
+
+	// Delete those landscape components that are found
+	for (auto it : FoundLandscapeStreamingProxy)
+	{
+		it->Destroy();
+	}
+
 
 }
 
