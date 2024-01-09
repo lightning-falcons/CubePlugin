@@ -43,7 +43,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	float ClockTime;
+	double ClockTime;
 	int ScanIndex; // Position Number to Move
 	TArray<TArray<double>> Odometry;
 
@@ -56,6 +56,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* StaticMeshComp;
+
+	// Array of timestamps for the odometry readings
+	TArray<double> TimeStampOdometry;
 
 
 

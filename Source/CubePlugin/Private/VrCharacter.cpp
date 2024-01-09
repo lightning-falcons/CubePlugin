@@ -141,7 +141,7 @@ void AVrCharacter::BeginPlay()
 	std::ifstream source;                    // build a read-Stream
 
 	//source.open("C:\\Users\\admin\\Desktop\\Input Data\\odom.txt");  // open data
-	source.open("C:\\Users\\admin\\Downloads\\updateodometry.csv");
+	source.open("C:\\Users\\admin\\Downloads\\new_updateodometry.csv");
 
 
 	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
@@ -159,15 +159,16 @@ void AVrCharacter::BeginPlay()
 
 		TArray<double> TempOdometry;
 		TempOdometry.Add(x * 100);
-		TempOdometry.Add(- y * 100);
+		TempOdometry.Add(y * 100);
 		TempOdometry.Add(z * 100);
 		TempOdometry.Add(a);
 		TempOdometry.Add(b);
-		TempOdometry.Add(-c);
+		TempOdometry.Add(c);
 		//TempOdometry.Add(d);
-		TempOdometry.Add(time / 1000);
+		TempOdometry.Add(time / 1000000000);
 
 		Odometry.Add(TempOdometry);
+		TimeStampOdometry.Add(time / 1000000000);
 
 		UE_LOG(LogTemp, Warning, TEXT(" %lf "), time);
 	}
@@ -202,10 +203,12 @@ void AVrCharacter::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
 
-	ScanIndex = 0;
+	ScanIndex = -1;
 
-	
-	Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
+	int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
+	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 299);
+
+	//Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 
 	
 }
@@ -226,24 +229,38 @@ void AVrCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// Local tracking of passed time
-	ClockTime += DeltaTime;
+	// ClockTime += DeltaTime;
+
+	// Get the clock time from the game state (synchronisation step)
+	ClockTime = GetWorld()->GetGameState<ADynamicGameState>()->ClockTime - 0.15;
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), ClockTime);
 
 	UE_LOG(LogTemp, Warning, TEXT("There are %i odometry readings"), Odometry.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("Time to exceed before actor is moved: %lf"), TimeStampOdometry[ScanIndex]);
+	//UE_LOG(LogTemp, Warning, TEXT("Should we move to next frame? %lf %lf %i"), ClockTime, TimeStampOdometry[ScanIndex], ClockTime > TimeStampOdometry[ScanIndex]);
+
 
 	// This is a temporary feature where we move a frame every 0.1 s.
-	if (ClockTime > 0.1 && ScanIndex < 299)
+	if (ClockTime > TimeStampOdometry[ScanIndex + 1] && ScanIndex < 29900)
 	{
 
-		// The Character should be set at the location PLUS 180 cm so they appear above the ground
-		SetActorLocation(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 180.0));
+		UE_LOG(LogTemp, Warning, TEXT("MOVING TO NEXT FRAME..."));
+
+		// Iterate to the next frame
+		ScanIndex += 1;
+
+		// Set the current odometry in the game state
+		// GetWorld()->GetGameState<ADynamicGameState>()->CurrentOdometry = Odometry[ScanIndex];
+		
+		// The Character should be set at the location PLUS 190 cm so they appear above the ground
+		SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0));
 
 		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
 
 		
 		// The clocktime is re-set
-		ClockTime = 0;
+		// ClockTime = 0;
 
 		/*
 
@@ -263,7 +280,7 @@ void AVrCharacter::Tick(float DeltaTime)
 		FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
 
 		// The local scan is loaded with the same position and orientation as the character
-		GetWorld()->GetGameState<ADynamicGameState>()->LoadNext(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
+		//GetWorld()->GetGameState<ADynamicGameState>()->LoadNext(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
 
 
 
@@ -277,19 +294,19 @@ void AVrCharacter::Tick(float DeltaTime)
 		{
 			// We set it both directly and using the player controller
 			// Need to do this to ensure all roll, pitch and yaw values are indeed set
-			SetActorRotation(rot);
-			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(rot);
+			SetActorRotation(rot.GetInverse());
+			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(rot.GetInverse());
 		}
 
-		// Iterate to the next frame
-		ScanIndex += 1;
+		// ScanIndex += 1;
 
 	}
-	
+	/*
 	if (ScanIndex == 299)
 	{
 		ScanIndex = 0;
 	}
+	*/
 
 	// Headset
 	

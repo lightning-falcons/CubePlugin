@@ -20,8 +20,8 @@ void ADynamicGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ClockTime = 0;
-	ScanIndex = 0;
+	// ClockTime = 0;
+	ScanIndex = -1;
 
 	// ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
 	
@@ -39,10 +39,15 @@ void ADynamicGameState::BeginPlay()
 
 	// Specify that the global point cloud should be displayed with colour source from data and with the particular point size
 	GlobalMapActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
-	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.25;
+	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.05;
+
+	DynamicActor->GetPointCloudComponent()->PointSize = 1;
+
 
 	// Now we need to import the local maps
-	FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
+	//FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
+
+	FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal_Color_LAS");
 	FString filesStartingWith = TEXT("");
 	FString fileExtensions = TEXT("las");
 
@@ -50,13 +55,19 @@ void ADynamicGameState::BeginPlay()
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
 	// Select every nth file, limit to m files
-	filesInDirectory = ExtractEvery(filesInDirectory, 3, 299);
+	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, 299);
 
-	// Load each point cloud
+	// Load each point cloud and also get the time stamp
 	for (auto it : filesInDirectory)
 	{
 		LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(it));
+		double OccurrenceTime = FCString::Atod(*FPaths::GetBaseFilename(it));
+		TimeStamp.Add(OccurrenceTime);
+		//UE_LOG(LogTemp, Warning, TEXT("Time: %lf"), OccurrenceTime);
 	}
+
+	// Set the start time to the first time stamp
+	ClockTime = TimeStamp[0];
 
 	// Search for all landscape components
 	TArray<AActor*> FoundLandscapeStreamingProxy;
@@ -125,6 +136,33 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 
 	// The GameState itself doesn't actually do anything on each tick
 	// Instead, the VRCharacter controls what is displayed
+	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
+
+	// Local tracking of passed time
+	ClockTime += DeltaSeconds;
+
+	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
+
+
+	// Check if the clock time is such that the next frame should be loaded
+	if (ClockTime > TimeStamp[ScanIndex + 1])
+	{
+		// Load the next frame
+		ScanIndex += 1;
+
+		UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR)"));
+
+		// Get the rotator, which describes the orientation of the character should face
+		FRotator rot = FRotator(-Odometry[ScanIndex][4], -Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+
+		// The local scan is loaded with the same position and orientation as the character
+		LoadNext(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
+
+		// Print the time discrepancy
+		double DiscrepantTime = Odometry[ScanIndex][6] - TimeStamp[ScanIndex];
+		UE_LOG(LogTemp, Warning, TEXT("DISCREPANT TIME %lf"), DiscrepantTime);
+
+	}
 	
 }
 
@@ -135,17 +173,35 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	GlobalMapActor->SetPointCloud(GlobalMap);
 	DynamicActor->SetPointCloud(LoadedPointClouds[Index]);
 
+
+	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
+
 	// THEN, set the locations of the point clouds using OFFSET
 	LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates);
+
+	// Get the individual points
+	LoadedPointClouds[Index]->GetPoints(Points);
+
+	// Iterate through the points
+	for (auto it : Points)
+	{
+
+		// Apply the location to each point
+		it->Location += FVector3f(0.f, 0.f, 190.f);
+
+	}
+
+	Points.Empty();
+
 	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
 	// Set the parameters for the local point cloud
 	DynamicActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
-	DynamicActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::None;
+	DynamicActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
 	
 	// Set the location and rotation of the local point cloud
-	// The LIDAR point cloud is shifted 150 CM up from the character so it aligns with the global point cloud
-	DynamicActor->SetActorLocationAndRotation(CharacterLocation + FVector(0.0, 0.0, 150.0), LocalRotation, false, 0, ETeleportType::None);	
+	// The LIDAR point cloud is shifted 190 CM up from the character so it aligns with the global point cloud
+	DynamicActor->SetActorLocationAndRotation(FVector(CharacterLocation), LocalRotation, false, 0, ETeleportType::None);
 
 }
 

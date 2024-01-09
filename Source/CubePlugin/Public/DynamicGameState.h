@@ -69,13 +69,32 @@ public:
 		return ExtractArray;
 	}
 
+	// Array of timestamps for the local maps
+	TArray<double> TimeStamp;
+
+	// The Game State is responsible for keeping track of the time and the
+	// current details e.g the CURRENT position & rotation according to the odometry.
+	// Please note that this is needed because update of the point cloud and
+	// character orientation and position may now be non-synchronous.
+	double ClockTime; // The time in seconds, as according to the names of the files
+	int ScanIndex; // Scan number to display for the POINT CLOUD
+
+	TArray<double> CurrentOdometry; // Current odometry details (applied)
+	
+	// The Game State also has odometry data that corresponds SPECIFICALLY to the LIDAR data
+	TArray<TArray<double>> Odometry;
+
+	// Downsampling Rate
+	int DownSamplePer = 20;
+
 private:
 
 	TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
 	ALidarPointCloudActor* GlobalMapActor;
 	ALidarPointCloudActor* DynamicActor;
-	float ClockTime;
-	int ScanIndex; // Scan number to display
+
+
+
 	TArray<FString> filesInDirectory;
 	TArray< ULidarPointCloud* > LoadedPointClouds;
 	ULidarPointCloud* GlobalMap;
