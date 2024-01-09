@@ -79,6 +79,21 @@ void ADynamicGameState::BeginPlay()
 		it->Destroy();
 	}
 
+	// Search for all camera actors
+	TArray<AActor*> Camera;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), Camera);
+
+	// Delete those camera actors that are found
+	for (auto it : Camera)
+	{
+		it->Destroy();
+	}
+
+
+	TArray<AActor*> DirectionalLight;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADirectionalLight::StaticClass(), DirectionalLight);
+	((ADirectionalLight*)DirectionalLight[0])->SetLightColor(FLinearColor(0, 0, 0));
+
 
 }
 

@@ -19,6 +19,7 @@
 #include "Engine/World.h"
 #include "DynamicGameState.h"
 #include "IXRTrackingSystem.h"
+#include "Camera/CameraActor.h"
 #include "VrCharacter.generated.h"
 
 

@@ -30,6 +30,9 @@
 #include "Misc/LocalTimestampDirectoryVisitor.h"
 #include "Runtime/Landscape/Classes/Landscape.h"
 #include "Runtime/Landscape/Classes/LandscapeStreamingProxy.h"
+#include "Engine/Light.h"
+#include "Engine/DirectionalLight.h"
+#include "Camera/CameraActor.h"
 #include "DynamicGameState.generated.h"
 
 /**
@@ -85,7 +88,7 @@ public:
 	TArray<TArray<double>> Odometry;
 
 	// Downsampling Rate
-	int DownSamplePer = 20;
+	int DownSamplePer = 1;
 
 private:
 
