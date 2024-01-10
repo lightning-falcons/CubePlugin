@@ -20,6 +20,8 @@
 #include "DynamicGameState.h"
 #include "IXRTrackingSystem.h"
 #include "Camera/CameraActor.h"
+#include "VideoWidget.h"
+#include "Blueprint/UserWidget.h"
 #include "VrCharacter.generated.h"
 
 
@@ -61,6 +63,14 @@ private:
 	// Array of timestamps for the odometry readings
 	TArray<double> TimeStampOdometry;
 
+public:
+	// Video Display
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	TSubclassOf<class UVideoWidget> VideoWidgetClass;
+
+private:
+	UPROPERTY()
+	class UVideoWidget* RealVideo;
 
 
 };

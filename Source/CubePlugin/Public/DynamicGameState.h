@@ -33,6 +33,9 @@
 #include "Engine/Light.h"
 #include "Engine/DirectionalLight.h"
 #include "Camera/CameraActor.h"
+#include <iostream>
+#include <fstream>
+#include <mutex>
 #include "DynamicGameState.generated.h"
 
 /**
@@ -88,7 +91,7 @@ public:
 	TArray<TArray<double>> Odometry;
 
 	// Downsampling Rate
-	int DownSamplePer = 1;
+	int DownSamplePer = 20;
 
 private:
 
@@ -103,6 +106,7 @@ private:
 	ULidarPointCloud* GlobalMap;
 	TArray<FLidarPointCloudPoint*> Points;
 	void SetColor(FColor AppliedColor, ULidarPointCloud* Map);
+	std::mutex g_num_mutex;
 
 
 

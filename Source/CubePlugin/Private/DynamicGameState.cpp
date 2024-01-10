@@ -55,7 +55,7 @@ void ADynamicGameState::BeginPlay()
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
 	// Select every nth file, limit to m files
-	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, 299);
+	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, 600);
 
 	// Load each point cloud and also get the time stamp
 	for (auto it : filesInDirectory)
@@ -148,16 +148,22 @@ TArray<FString> ADynamicGameState::GetAllFilesInDirectory(const FString director
 
 void ADynamicGameState::Tick( float DeltaSeconds )
 {
+	
+	g_num_mutex.lock();
 
 	// The GameState itself doesn't actually do anything on each tick
 	// Instead, the VRCharacter controls what is displayed
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
 	// Local tracking of passed time
-	ClockTime += DeltaSeconds;
+	ClockTime += DeltaSeconds * 0.6;
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
+	// Set the point clouds first
+	GlobalMapActor->SetPointCloud(GlobalMap);
+	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
+	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
 	// Check if the clock time is such that the next frame should be loaded
 	if (ClockTime > TimeStamp[ScanIndex + 1])
@@ -174,41 +180,62 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 		LoadNext(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
 
 		// Print the time discrepancy
-		double DiscrepantTime = Odometry[ScanIndex][6] - TimeStamp[ScanIndex];
-		UE_LOG(LogTemp, Warning, TEXT("DISCREPANT TIME %lf"), DiscrepantTime);
+		// double DiscrepantTime = Odometry[ScanIndex][6] - TimeStamp[ScanIndex];
+		// UE_LOG(LogTemp, Warning, TEXT("DISCREPANT TIME %lf"), DiscrepantTime);
 
 	}
+
+	g_num_mutex.unlock();
 	
 }
 
 void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation )
 {
+
+	std::ofstream myfile;
+	// myfile.open("C:\\Users\\admin\\Downloads\\EXAMPLECRASHDATA.txt");
+	// myfile << std::string(TCHAR_TO_UTF8(*(filesInDirectory[Index])));
+	// myfile << std::string("%i %i", Index, LoadedPointClouds.Num());
+	// myfile.close();
+
+	UE_LOG(LogTemp, Warning, TEXT("ARRAY TRACKER %d, %d"), Index, LoadedPointClouds.Num());
+
+	try {
+
+		if (LoadedPointClouds[Index]->IsFullyLoaded() != true)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("NOT FULLY LOADED"));
+		//	return;
+		}
+
+		DynamicActor->SetPointCloud(LoadedPointClouds[Index]);
+
+
+		// THEN, set the locations of the point clouds using OFFSET
+		LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates + FVector(0, 0, 190));
+
+		// Get the individual points
+		LoadedPointClouds[Index]->GetPoints(Points);
+
+		// Iterate through the points
+		/*
+		for (auto it : Points)
+		{
+
+			// Apply the location to each point
+			it->Location += FVector3f(0.f, 0.f, 190.f);
+
+		}
 	
-	// Set the point clouds first
-	GlobalMapActor->SetPointCloud(GlobalMap);
-	DynamicActor->SetPointCloud(LoadedPointClouds[Index]);
 
+		Points.Empty();
 
-	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
-
-	// THEN, set the locations of the point clouds using OFFSET
-	LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates);
-
-	// Get the individual points
-	LoadedPointClouds[Index]->GetPoints(Points);
-
-	// Iterate through the points
-	for (auto it : Points)
-	{
-
-		// Apply the location to each point
-		it->Location += FVector3f(0.f, 0.f, 190.f);
-
+		*/
+	
+	} catch ( ... ) {
+		UE_LOG(LogTemp, Warning, TEXT("CAUGHT"));
+		// nothing 
 	}
-
-	Points.Empty();
-
-	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
 	// Set the parameters for the local point cloud
 	DynamicActor->GetPointCloudComponent()->IntensityInfluence = 0.9;

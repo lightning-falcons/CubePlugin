@@ -206,33 +206,70 @@ void AVrCharacter::BeginPlay()
 	ScanIndex = -1;
 
 	int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
-	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 299);
+	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 600);
 
 	//Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 
+	if (!UGameplayStatics::GetPlayerController(GetWorld(), 0))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FAILED TO GET CONTROLLER"));
+	}
+
+	// RealVideo = CreateWidget<UVideoWidget>((APlayerController*) UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
+	RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
+
+	if (RealVideo)
+	{
+		RealVideo->AddToPlayerScreen();
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CREATED"));
+
+	}
 	
 }
 
 // Called every frame
 void AVrCharacter::Tick(float DeltaTime)
 {
+	if (RealVideo == nullptr)
+	{
+		// RealVideo = CreateWidget<UVideoWidget>((APlayerController*)UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
+		RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
+
+		if (RealVideo)
+		{
+			RealVideo->AddToPlayerScreen();
+		}
+		else if (VideoWidgetClass == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("VIDEO WIDGET CLASS NOT SET"));
+
+		}
+
+		else {
+			UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CREATED"));
+
+		}
+	}
+
 
 	// This can be toggled to determine whether the camera should 
 	// be always in the direction of travel or should be controlled
 	// by the VR HMD
-	bool VROn = false;
+	bool VROn = true;
 
 	// This can be toggled to determine whether HMD direction should set
 	// relative or absolute orientation
 	bool RelativeOrientation = true;
 
-	Super::Tick(DeltaTime);
+	Super::Tick(DeltaTime * 0.6);
 
 	// Local tracking of passed time
 	// ClockTime += DeltaTime;
 
 	// Get the clock time from the game state (synchronisation step)
-	ClockTime = GetWorld()->GetGameState<ADynamicGameState>()->ClockTime - 0.15;
+	ClockTime = GetWorld()->GetGameState<ADynamicGameState>()->ClockTime;
 
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), ClockTime);
 
@@ -312,7 +349,7 @@ void AVrCharacter::Tick(float DeltaTime)
 	
 
 	// If the VR mode is on, the orientation should always be in the direction of the HMD
-	if (VROn)
+	if (VROn && ScanIndex != -1)
 	{
 
 		// Get the HMD orientation
@@ -325,7 +362,7 @@ void AVrCharacter::Tick(float DeltaTime)
 		if (RelativeOrientation)
 		{
 			FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
-			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot);
+			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot.GetInverse());
 		}
 		else
 		{
