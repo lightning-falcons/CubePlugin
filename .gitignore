@@ -75,3 +75,6 @@ DerivedDataCache/*
 
 # Custom ignore of unused plugins
 Plugins/*
+
+# Ignore the data folder
+Data/*
