@@ -25,7 +25,7 @@ void ADynamicGameState::BeginPlay()
 
 	// ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
 	
-	const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\TransformedCloud_Cudal.las");
+	const FString PathToFile = FString("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Global Point Cloud.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\colour.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\cudal_short_parsed.las");
 
@@ -47,7 +47,7 @@ void ADynamicGameState::BeginPlay()
 	// Now we need to import the local maps
 	//FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
 
-	FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal_Color_LAS");
+	FString directoryToSearch = TEXT("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Local Point Clouds");
 	FString filesStartingWith = TEXT("");
 	FString fileExtensions = TEXT("las");
 

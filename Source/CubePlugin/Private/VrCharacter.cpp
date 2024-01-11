@@ -141,7 +141,7 @@ void AVrCharacter::BeginPlay()
 	std::ifstream source;                    // build a read-Stream
 
 	//source.open("C:\\Users\\admin\\Desktop\\Input Data\\odom.txt");  // open data
-	source.open("C:\\Users\\admin\\Downloads\\new_updateodometry.csv");
+	source.open("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Odometry.csv");
 
 
 	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);

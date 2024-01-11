@@ -1,6 +1,8 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Image.h"
+#include "ImageUtils.h"
+#include "DynamicGameState.h"
 #include "VideoWidget.generated.h"
 
 UCLASS(Abstract)
@@ -16,4 +18,11 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	class UImage* Image;
+
+	void NativeTick(const FGeometry& MyGeometry, float InDeltaTime);
+	
+	TArray<UTexture2D*> ImageTextures;
+	TArray<double> TimeStamp;
+	int ImageIndex;
+
 };

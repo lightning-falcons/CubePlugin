@@ -91,11 +91,13 @@ public:
 	TArray<TArray<double>> Odometry;
 
 	// Downsampling Rate
-	int DownSamplePer = 20;
+	int DownSamplePer = 1;
+
+	static TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
+
 
 private:
 
-	TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
 	ALidarPointCloudActor* GlobalMapActor;
 	ALidarPointCloudActor* DynamicActor;
 
