@@ -122,6 +122,8 @@ AVrCharacter::AVrCharacter()
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
+	VideoWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("widget component"));
+
 }
 
 // Called when the game starts or when spawned
@@ -205,6 +207,9 @@ void AVrCharacter::BeginPlay()
 
 	ScanIndex = -1;
 
+	// This is how much we downsample the odometry as used for the LIDAR scans
+	// i.e so that there is 1:1 correspondence between LIDAR scan and odometry reading
+	// We are setting the Odometry variable for the game state, not the character
 	int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
 	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 600);
 
@@ -220,18 +225,140 @@ void AVrCharacter::BeginPlay()
 
 	if (RealVideo)
 	{
-		RealVideo->AddToPlayerScreen();
+		// RealVideo->AddToPlayerScreen();
 	}
 	else {
 		UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CREATED"));
 
 	}
+
+	////////////////////////////////////////////////////
+	// This was an attempt to extract all blueprint subclasses of a class
+	// It doesn't work right now
+
+	/*
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+
+	// Retrieve all blueprint classes 
+	TArray<FAssetData> BlueprintList;
+
+	FARFilter Filter;
+	Filter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
+	Filter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	AssetRegistryModule.Get().GetAssets(Filter, BlueprintList);
+
+	for (int32 AssetIdx = 0; AssetIdx < BlueprintList.Num(); ++AssetIdx)
+	{
+		if (BlueprintList[AssetIdx].GetAsset() != NULL)
+		{
+			if (UObject* ChildObject = Cast<UObject>(BlueprintList[AssetIdx].GetAsset()))
+			{
+				UBlueprint* BlueprintObj = Cast<UBlueprint>(StaticLoadObject(UBlueprint::StaticClass(), NULL, *ChildObject->GetPathName()));
+
+				if (BlueprintObj != NULL && BlueprintObj->GeneratedClass != NULL && BlueprintObj->GeneratedClass->GetDefaultObject() != NULL)
+				{
+					if (Cast<UVideoWidget>(BlueprintObj->GeneratedClass->GetDefaultObject()) != NULL)
+					{
+						ItemReferences.Add(*BlueprintObj->GeneratedClass);
+					}
+				}
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget."), ItemReferences.Num());
+	*/
+
+	/////////////////////////////
+
+	// Get all the UVideoWidget subclass objects
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), ItemReferences2, UVideoWidget::StaticClass(), false);
+
+	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget. [NewMethod -- FIRST]"), ItemReferences2.Num());
+
+	// Connect the widget component to the character
+	VideoWidgetComponent->SetupAttachment(RootComponent);
+
+	/*
+	TSubclassOf<AActor> ClassToFind; // Needs to be populated somehow (e.g. by exposing to blueprints as uproperty and setting it there
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ClassToFind, FoundActors);
+	*/
+
+	
+	// VideoWidgetComponent->SetOnlyOwnerSee(true);
+	// VideoWidgetComponent->SetIsReplicated(false);
+	VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+	VideoWidgetComponent->SetDrawSize(FVector2D(1920, 1080));
+	VideoWidgetComponent->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+	VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
+	VideoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+	VideoWidgetComponent->SetVisibility(true);
+	VideoWidgetComponent->RegisterComponent();
+
+
+
 	
 }
 
 // Called every frame
 void AVrCharacter::Tick(float DeltaTime)
 {
+
+	// Check whether any valid UVideoWidget subclass object has been found, and if
+	// it is the first time that has happened, set the widget class
+	if (ItemReferences2.Num() > 0 && !VideoWidgetSet && ItemReferences2[0] != nullptr)
+	{
+		VideoWidgetComponent->SetWidgetClass(ItemReferences2[0]->GetClass());
+		VideoWidgetSet = true;
+		// VideoWidgetComponent->SetOwnerPlayer(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+	}
+
+	// Preserve the relative position & orientation of the video
+	VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+	VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
+
+	////////////////////////////////////////////////////
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+
+	// Retrieve all blueprint classes 
+	TArray<FAssetData> BlueprintList;
+
+	FARFilter Filter;
+	Filter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
+	Filter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
+	AssetRegistryModule.Get().GetAssets(Filter, BlueprintList);
+
+	for (int32 AssetIdx = 0; AssetIdx < BlueprintList.Num(); ++AssetIdx)
+	{
+		if (BlueprintList[AssetIdx].GetAsset() != NULL)
+		{
+			if (UObject* ChildObject = Cast<UObject>(BlueprintList[AssetIdx].GetAsset()))
+			{
+				UBlueprint* BlueprintObj = Cast<UBlueprint>(StaticLoadObject(UBlueprint::StaticClass(), NULL, *ChildObject->GetPathName()));
+
+				if (BlueprintObj != NULL && BlueprintObj->GeneratedClass != NULL && BlueprintObj->GeneratedClass->GetDefaultObject() != NULL)
+				{
+					if (Cast<UVideoWidget>(BlueprintObj->GeneratedClass->GetDefaultObject()) != NULL)
+					{
+						ItemReferences.Add(*BlueprintObj->GeneratedClass);
+					}
+				}
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget."), ItemReferences.Num());
+
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), ItemReferences2, UVideoWidget::StaticClass(), false);
+
+	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget. [NewMethod]"), ItemReferences2.Num());
+
+
+	/////////////////////////////
+
 	if (RealVideo == nullptr)
 	{
 		// RealVideo = CreateWidget<UVideoWidget>((APlayerController*)UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
@@ -251,6 +378,7 @@ void AVrCharacter::Tick(float DeltaTime)
 			UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CREATED"));
 
 		}
+
 	}
 
 

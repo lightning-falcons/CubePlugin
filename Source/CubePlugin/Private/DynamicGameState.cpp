@@ -89,7 +89,7 @@ void ADynamicGameState::BeginPlay()
 		it->Destroy();
 	}
 
-
+	// Make the world dark
 	TArray<AActor*> DirectionalLight;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADirectionalLight::StaticClass(), DirectionalLight);
 	((ADirectionalLight*)DirectionalLight[0])->SetLightColor(FLinearColor(0, 0, 0));

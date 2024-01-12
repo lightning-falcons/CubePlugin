@@ -22,6 +22,17 @@
 #include "Camera/CameraActor.h"
 #include "VideoWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
+#include "UObject/Object.h"
+#include <UObject/ConstructorHelpers.h>
+#include <Engine/DataTable.h>
+#include "AssetRegistryModule.h"
+//#include "Ability/FOEffect.h"
+#include "Engine/Blueprint.h"
+#include "Modules/ModuleManager.h"
+#include "UObject/SoftObjectPtr.h"
+#include "AssetRegistryModule.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "VrCharacter.generated.h"
 
 
@@ -71,6 +82,17 @@ public:
 private:
 	UPROPERTY()
 	class UVideoWidget* RealVideo;
+
+	UPROPERTY(EditAnywhere)
+	class UWidgetComponent* VideoWidgetComponent;
+
+	UPROPERTY()
+	TArray<TSubclassOf<UVideoWidget>> ItemReferences;
+
+	UPROPERTY()
+	TArray<UUserWidget *> ItemReferences2;
+
+	bool VideoWidgetSet = false;
 
 
 };
