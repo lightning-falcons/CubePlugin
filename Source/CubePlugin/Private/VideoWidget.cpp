@@ -13,7 +13,7 @@ void UVideoWidget::NativeConstruct()
 
 	// Get all the image files
 	TArray<FString> filesInDirectory = ADynamicGameState::GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
-	filesInDirectory = ADynamicGameState::ExtractEvery(filesInDirectory, 5, 200);
+	filesInDirectory = ADynamicGameState::ExtractEvery(filesInDirectory, 30, 300);
 
 	// Iterate through the image files and extract them as 2D textures and add to an array
 	// Also make sure to extract the time and add to an array

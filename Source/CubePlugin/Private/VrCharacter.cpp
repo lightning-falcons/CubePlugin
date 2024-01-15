@@ -211,7 +211,7 @@ void AVrCharacter::BeginPlay()
 	// i.e so that there is 1:1 correspondence between LIDAR scan and odometry reading
 	// We are setting the Odometry variable for the game state, not the character
 	int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
-	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 600);
+	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 300);
 
 	//Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 
@@ -221,6 +221,8 @@ void AVrCharacter::BeginPlay()
 	}
 
 	// RealVideo = CreateWidget<UVideoWidget>((APlayerController*) UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
+
+	/*
 	RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
 
 	if (RealVideo)
@@ -231,6 +233,8 @@ void AVrCharacter::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CREATED"));
 
 	}
+
+	*/
 
 	////////////////////////////////////////////////////
 	// This was an attempt to extract all blueprint subclasses of a class
@@ -276,8 +280,7 @@ void AVrCharacter::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget. [NewMethod -- FIRST]"), ItemReferences2.Num());
 
-	// Connect the widget component to the character
-	VideoWidgetComponent->SetupAttachment(RootComponent);
+
 
 	/*
 	TSubclassOf<AActor> ClassToFind; // Needs to be populated somehow (e.g. by exposing to blueprints as uproperty and setting it there
@@ -286,16 +289,6 @@ void AVrCharacter::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ClassToFind, FoundActors);
 	*/
 
-	
-	// VideoWidgetComponent->SetOnlyOwnerSee(true);
-	// VideoWidgetComponent->SetIsReplicated(false);
-	VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
-	VideoWidgetComponent->SetDrawSize(FVector2D(1920, 1080));
-	VideoWidgetComponent->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-	VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
-	VideoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
-	VideoWidgetComponent->SetVisibility(true);
-	VideoWidgetComponent->RegisterComponent();
 
 
 
@@ -306,10 +299,24 @@ void AVrCharacter::BeginPlay()
 void AVrCharacter::Tick(float DeltaTime)
 {
 
+
 	// Check whether any valid UVideoWidget subclass object has been found, and if
 	// it is the first time that has happened, set the widget class
 	if (ItemReferences2.Num() > 0 && !VideoWidgetSet && ItemReferences2[0] != nullptr)
 	{
+		// Connect the widget component to the character
+		VideoWidgetComponent->SetupAttachment(RootComponent);
+
+		// VideoWidgetComponent->SetOnlyOwnerSee(true);
+		// VideoWidgetComponent->SetIsReplicated(false);
+		VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
+		VideoWidgetComponent->SetDrawSize(FVector2D(1920, 1080));
+		VideoWidgetComponent->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
+		VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
+		VideoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
+		VideoWidgetComponent->SetVisibility(true);
+		VideoWidgetComponent->RegisterComponent();
+
 		VideoWidgetComponent->SetWidgetClass(ItemReferences2[0]->GetClass());
 		VideoWidgetSet = true;
 		// VideoWidgetComponent->SetOwnerPlayer(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -358,6 +365,14 @@ void AVrCharacter::Tick(float DeltaTime)
 
 
 	/////////////////////////////
+	/*
+	if (RealVideo == nullptr)
+	{
+		RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
+	}
+	*/
+
+	/*
 
 	if (RealVideo == nullptr)
 	{
@@ -380,7 +395,7 @@ void AVrCharacter::Tick(float DeltaTime)
 		}
 
 	}
-
+	*/
 
 	// This can be toggled to determine whether the camera should 
 	// be always in the direction of travel or should be controlled
@@ -391,7 +406,7 @@ void AVrCharacter::Tick(float DeltaTime)
 	// relative or absolute orientation
 	bool RelativeOrientation = true;
 
-	Super::Tick(DeltaTime * 0.6);
+	Super::Tick(DeltaTime * 1.0);
 
 	// Local tracking of passed time
 	// ClockTime += DeltaTime;
@@ -461,6 +476,7 @@ void AVrCharacter::Tick(float DeltaTime)
 			// Need to do this to ensure all roll, pitch and yaw values are indeed set
 			SetActorRotation(rot.GetInverse());
 			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(rot.GetInverse());
+
 		}
 
 		// ScanIndex += 1;
@@ -486,15 +502,18 @@ void AVrCharacter::Tick(float DeltaTime)
 		GEngine->XRSystem->GetCurrentPose(IXRTrackingSystem::HMDDeviceId, hmdRotation, hmdLocationOffset);
 
 		// Set the orientation of the character
-		SetActorRotation(hmdRotation);
+		// SetActorRotation(hmdRotation);
 		if (RelativeOrientation)
 		{
 			FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
 			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot.GetInverse());
+			SetActorRotation(hmdRotation.Rotator() + rot.GetInverse());
+
 		}
 		else
 		{
 			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
+			SetActorRotation(hmdRotation.Rotator());
 		}
 	}
 

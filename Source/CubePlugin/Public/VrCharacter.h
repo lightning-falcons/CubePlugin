@@ -59,6 +59,7 @@ public:
 private:
 	double ClockTime;
 	int ScanIndex; // Position Number to Move
+
 	TArray<TArray<double>> Odometry;
 
 
@@ -72,6 +73,7 @@ private:
 	UStaticMeshComponent* StaticMeshComp;
 
 	// Array of timestamps for the odometry readings
+	UPROPERTY()
 	TArray<double> TimeStampOdometry;
 
 public:

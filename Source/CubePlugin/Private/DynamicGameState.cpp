@@ -55,7 +55,7 @@ void ADynamicGameState::BeginPlay()
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
 	// Select every nth file, limit to m files
-	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, 600);
+	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, 300);
 
 	// Load each point cloud and also get the time stamp
 	for (auto it : filesInDirectory)
@@ -156,7 +156,7 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
 	// Local tracking of passed time
-	ClockTime += DeltaSeconds * 0.6;
+	ClockTime += DeltaSeconds * 1.0;
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
@@ -192,7 +192,7 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation )
 {
 
-	std::ofstream myfile;
+	// std::ofstream myfile;
 	// myfile.open("C:\\Users\\admin\\Downloads\\EXAMPLECRASHDATA.txt");
 	// myfile << std::string(TCHAR_TO_UTF8(*(filesInDirectory[Index])));
 	// myfile << std::string("%i %i", Index, LoadedPointClouds.Num());
@@ -215,7 +215,7 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 		LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates + FVector(0, 0, 190));
 
 		// Get the individual points
-		LoadedPointClouds[Index]->GetPoints(Points);
+		// LoadedPointClouds[Index]->GetPoints(Points);
 
 		// Iterate through the points
 		/*

@@ -98,15 +98,24 @@ public:
 
 private:
 
+	UPROPERTY()
 	ALidarPointCloudActor* GlobalMapActor;
+	
+	UPROPERTY()
 	ALidarPointCloudActor* DynamicActor;
 
 
-
 	TArray<FString> filesInDirectory;
+
+	UPROPERTY()
 	TArray< ULidarPointCloud* > LoadedPointClouds;
+	
+	UPROPERTY()
 	ULidarPointCloud* GlobalMap;
+
+	// UPROPERTY()
 	TArray<FLidarPointCloudPoint*> Points;
+
 	void SetColor(FColor AppliedColor, ULidarPointCloud* Map);
 	std::mutex g_num_mutex;
 

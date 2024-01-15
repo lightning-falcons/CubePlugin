@@ -21,7 +21,9 @@ protected:
 
 	void NativeTick(const FGeometry& MyGeometry, float InDeltaTime);
 	
+	UPROPERTY()
 	TArray<UTexture2D*> ImageTextures;
+	
 	TArray<double> TimeStamp;
 	int ImageIndex;
 
