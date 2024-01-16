@@ -37,7 +37,7 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	
 	// Get the clock time as stored by the game state
-	double ClockTime = GetWorld()->GetGameState<ADynamicGameState>()->ClockTime;
+	ClockTime = GetWorld()->GetGameState<ADynamicGameState>()->ClockTime;
 
 	// Change the image shown only if the NEXT image time has been reached
 	if (Image && ClockTime > TimeStamp[ImageIndex + 1])
@@ -59,3 +59,34 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 
 }
 
+void UVideoWidget::SetTime(double Time)
+{
+
+	// Find out what the current time is
+	double CurrentTime = ClockTime;
+
+	// Need to change the actual time
+	// This doesn't matter that much because we are pulling
+	// the time from the game state anyways
+	// ClockTime = Time;
+
+	// Check whether we go back or forwards in time
+	if (Time < CurrentTime)
+	{
+		// We need to go back in time
+
+		// Need to change the ScanIndex (which will then set the position)
+		while (Time < TimeStamp[6])
+		{
+			ImageIndex -= 1;
+		}
+	}
+	else if (Time > CurrentTime)
+	{
+		while (Time > TimeStamp[6])
+		{
+			ImageIndex += 1;
+		}
+	}
+
+}

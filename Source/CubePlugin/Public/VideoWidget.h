@@ -27,4 +27,9 @@ protected:
 	TArray<double> TimeStamp;
 	int ImageIndex;
 
+	double ClockTime;
+
+public:
+	void SetTime(double Time);
+
 };

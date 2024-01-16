@@ -140,11 +140,22 @@ protected:
 
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* MovementAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* BackTimeAction;
 	
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* ForwardTimeAction;
+
 	void Bird(const FInputActionValue& Value);
 	void Ground(const FInputActionValue& Value);
 	void Movement(const FInputActionValue& Value);
+	void BackTime(const FInputActionValue& Value);
+	void ForwardTime(const FInputActionValue& Value);
 
+public:
+	
+	void SetTime(double Time);
 
 
 

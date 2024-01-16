@@ -119,7 +119,8 @@ private:
 	void SetColor(FColor AppliedColor, ULidarPointCloud* Map);
 	std::mutex g_num_mutex;
 
-
+public:
+	void SetTime(double Time);
 
 
 };

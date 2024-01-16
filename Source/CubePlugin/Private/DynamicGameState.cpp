@@ -271,3 +271,35 @@ void ADynamicGameState::SetColor(FColor AppliedColor, ULidarPointCloud* Map)
 	Points.Empty();
 
 }
+
+void ADynamicGameState::SetTime(double Time)
+{
+
+	// Find out what the current time is
+	double CurrentTime = ClockTime;
+
+	// Need to change the actual time
+	// This doesn't matter that much because we are pulling
+	// the time from the game state anyways
+	ClockTime = Time;
+
+	// Check whether we go back or forwards in time
+	if (ClockTime < CurrentTime)
+	{
+		// We need to go back in time
+
+		// Need to change the ScanIndex (which will then set the position)
+		while (ClockTime < Odometry[ScanIndex][6])
+		{
+			ScanIndex -= 1;
+		}
+	}
+	else if (ClockTime > CurrentTime)
+	{
+		while (ClockTime > Odometry[ScanIndex][6])
+		{
+			ScanIndex += 1;
+		}
+	}
+
+}

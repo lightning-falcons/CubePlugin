@@ -599,6 +599,24 @@ void AVrCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		}
 
+		if (BackTimeAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(BackTimeAction, ETriggerEvent::Started, this, &AVrCharacter::BackTime);
+
+		}
+
+		if (BackTimeAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(ForwardTimeAction, ETriggerEvent::Started, this, &AVrCharacter::ForwardTime);
+
+		}
+
 		/*
 		// This calls the handler function (a UFUNCTION) by name on every tick while the input conditions are met, such as when holding a movement key down.
 		if (MyOtherInputAction)
@@ -705,6 +723,72 @@ void AVrCharacter::Ground(const FInputActionValue& Value)
 	else
 	{
 		SelectView(ROADVIEW);
+	}
+
+}
+
+void AVrCharacter::BackTime(const FInputActionValue& Value)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("BACKTIME HAS BEEN CALLED"));
+
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("IA Triggered - BACKTIME"));
+		double NewTime = ClockTime - 1;
+		SetTime(NewTime);
+		GetWorld()->GetGameState<ADynamicGameState>()->SetTime(NewTime);
+		((UVideoWidget*) ItemReferences2[0])->SetTime(NewTime);
+	}
+
+}
+
+void AVrCharacter::ForwardTime(const FInputActionValue& Value)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("BACKTIME HAS BEEN CALLED"));
+
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("IA Triggered - FORWARDTIME"));
+		double NewTime = ClockTime + 1;
+		SetTime(NewTime);
+		GetWorld()->GetGameState<ADynamicGameState>()->SetTime(NewTime);
+		((UVideoWidget*)ItemReferences2[0])->SetTime(NewTime);
+	}
+
+}
+
+void AVrCharacter::SetTime(double Time)
+{
+	
+	// Find out what the current time is
+	double CurrentTime = ClockTime;
+
+	// Need to change the actual time
+	// This doesn't matter that much because we are pulling
+	// the time from the game state anyways
+	ClockTime = Time;
+
+	// Check whether we go back or forwards in time
+	if (ClockTime < CurrentTime)
+	{
+		// We need to go back in time
+
+		// Need to change the ScanIndex (which will then set the position)
+		while (ClockTime < Odometry[ScanIndex][6])
+		{
+			ScanIndex -= 1;
+		}
+	}
+	else if (ClockTime > CurrentTime)
+	{
+		while (ClockTime > Odometry[ScanIndex][6])
+		{
+			ScanIndex += 1;
+		}
 	}
 
 }
