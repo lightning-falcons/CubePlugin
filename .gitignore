@@ -78,3 +78,5 @@ Plugins/*
 
 # Ignore the data folder
 Data/*
+
+Chippendale/*

@@ -50,6 +50,7 @@ public class CubePlugin : ModuleRules
 				"LidarPointCloudRuntime",
                 "Landscape",
                 "UMG",
+                "EnhancedInput",
             }
             );
 

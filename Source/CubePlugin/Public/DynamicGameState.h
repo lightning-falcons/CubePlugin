@@ -91,7 +91,7 @@ public:
 	TArray<TArray<double>> Odometry;
 
 	// Downsampling Rate
-	int DownSamplePer = 1;
+	int DownSamplePer = 5;
 
 	static TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
 

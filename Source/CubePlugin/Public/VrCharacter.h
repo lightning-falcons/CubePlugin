@@ -33,8 +33,21 @@
 #include "UObject/SoftObjectPtr.h"
 #include "AssetRegistryModule.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputActionValue.h"
+#include "Components/InputComponent.h"
+#include "EnhancedInputComponent.h"
+#include "GameFramework/Character.h"
 #include "VrCharacter.generated.h"
 
+// Two types of views are allowed
+enum ViewType { ROADVIEW, BIRDVIEW };
+
+// Two types of movement are allowed
+enum MovementType { STOPPED, MOVING };
+
+class UInputMappingContext;
+class UInputAction;
 
 UCLASS()
 class CUBEPLUGIN_API AVrCharacter : public ACharacter
@@ -81,6 +94,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	TSubclassOf<class UVideoWidget> VideoWidgetClass;
 
+	// For switching between bird's eye view and road view
+	void SelectView(ViewType View);
+
+	// For pausing the movement of the VR character
+	void PauseMovement();
+
+	// For restarting the movement of the VR character
+	void StartMovement();
+
 private:
 	UPROPERTY()
 	class UVideoWidget* RealVideo;
@@ -95,6 +117,35 @@ private:
 	TArray<UUserWidget *> ItemReferences2;
 
 	bool VideoWidgetSet = false;
+
+	// Adjustment for the bird's eye view
+	double ZAdjustment = 0;
+	double PitchAdjustment = 0;
+
+	ViewType CurrentView = ROADVIEW;
+
+	// Store whether the character should be moving
+	MovementType Motion = MOVING;
+
+protected:
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputMappingContext* VRMappingContext;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* BirdAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* GroundAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* MovementAction;
+	
+	void Bird(const FInputActionValue& Value);
+	void Ground(const FInputActionValue& Value);
+	void Movement(const FInputActionValue& Value);
+
+
 
 
 };

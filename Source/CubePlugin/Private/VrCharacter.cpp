@@ -289,6 +289,26 @@ void AVrCharacter::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ClassToFind, FoundActors);
 	*/
 
+	// Enhanced Input
+	// Make sure that we have a valid PlayerController.
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+
+		UE_LOG(LogTemp, Warning, TEXT("PC1"));
+
+		// Get the Enhanced Input Local Player Subsystem from the Local Player related to our Player Controller.
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("PC2"));
+
+			// PawnClientRestart can run more than once in an Actor's lifetime, so start by clearing out any leftover mappings.
+			Subsystem->ClearAllMappings();
+
+			// Add each mapping context, along with their priority values. Higher values outprioritize lower values.
+			Subsystem->AddMappingContext(VRMappingContext, 0);
+		}
+	}
 
 
 
@@ -312,7 +332,8 @@ void AVrCharacter::Tick(float DeltaTime)
 		VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 		VideoWidgetComponent->SetDrawSize(FVector2D(1920, 1080));
 		VideoWidgetComponent->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
-		VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
+		//VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
+		VideoWidgetComponent->SetRelativeLocation(FVector(500.f, -800.f, -190.f));
 		VideoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
 		VideoWidgetComponent->SetVisibility(true);
 		VideoWidgetComponent->RegisterComponent();
@@ -325,7 +346,7 @@ void AVrCharacter::Tick(float DeltaTime)
 
 	// Preserve the relative position & orientation of the video
 	VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
-	VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
+	VideoWidgetComponent->SetRelativeLocation(FVector(500.f, -800.f, -190.f));
 
 	////////////////////////////////////////////////////
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
@@ -434,7 +455,11 @@ void AVrCharacter::Tick(float DeltaTime)
 		// GetWorld()->GetGameState<ADynamicGameState>()->CurrentOdometry = Odometry[ScanIndex];
 		
 		// The Character should be set at the location PLUS 190 cm so they appear above the ground
-		SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0));
+		if (Motion == MOVING)
+		{
+			// Only update the character location if they are supposed to be moving
+			SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment));
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
 
@@ -506,19 +531,36 @@ void AVrCharacter::Tick(float DeltaTime)
 		if (RelativeOrientation)
 		{
 			FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
-			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot.GetInverse());
-			SetActorRotation(hmdRotation.Rotator() + rot.GetInverse());
+			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot.GetInverse());
+			SetActorRotation(hmdRotation.Rotator() + rot.GetInverse() + FRotator(PitchAdjustment, 0.0, 0.0));
 
 		}
 		else
 		{
-			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
-			SetActorRotation(hmdRotation.Rotator());
+			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
+			SetActorRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
 		}
 	}
 
+	/*
 
-
+	if (ScanIndex == 75)
+	{
+		SelectView(BIRDVIEW);
+	}
+	else if (ScanIndex == 250)
+	{
+		SelectView(ROADVIEW);
+	}
+	else if (ScanIndex == 190)
+	{
+		PauseMovement();
+	}
+	else if (ScanIndex == 235)
+	{
+		StartMovement();
+	}
+	*/
 }
 
 // Called to bind functionality to input
@@ -526,5 +568,143 @@ void AVrCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	UE_LOG(LogTemp, Warning, TEXT("SPIC CALLED"));
+
+
+	// Make sure that we are using a UEnhancedInputComponent; if not, the project is not configured correctly.
+	if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+
+		UE_LOG(LogTemp, Warning, TEXT("EPI Setup"));
+
+		// There are ways to bind a UInputAction* to a handler function and multiple types of ETriggerEvent that may be of interest.
+
+		// This calls the handler function on the tick when MyInputAction starts, such as when pressing an action button.
+		if (BirdAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(BirdAction, ETriggerEvent::Started, this, &AVrCharacter::Bird);
+			PlayerEnhancedInputComponent->BindAction(BirdAction, ETriggerEvent::Canceled, this, &AVrCharacter::Ground);
+
+		}
+
+		if (MovementAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("MA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(MovementAction, ETriggerEvent::Started, this, &AVrCharacter::Movement);
+
+		}
+
+		/*
+		// This calls the handler function (a UFUNCTION) by name on every tick while the input conditions are met, such as when holding a movement key down.
+		if (MyOtherInputAction)
+		{
+			PlayerEnhancedInputComponent->BindAction(MyOtherInputAction, ETriggerEvent::Triggered, this, TEXT("MyOtherInputHandlerFunction"));
+		}
+		*/
+	}
+
 }
 
+
+void AVrCharacter::SelectView(ViewType View)
+{
+	CurrentView = View;
+
+	if (View == BIRDVIEW)
+	{
+		ZAdjustment = 5000.0;
+		PitchAdjustment = 270.0;
+	}
+	else if (View == ROADVIEW)
+	{
+		ZAdjustment = 0.0;
+		PitchAdjustment = 0.0;
+	}
+}
+
+void AVrCharacter::PauseMovement()
+{
+	Motion = STOPPED;
+}
+
+void AVrCharacter::StartMovement()
+{
+	Motion = MOVING;
+}
+
+void AVrCharacter::Bird(const FInputActionValue& Value)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("BIRD HAS BEEN CALLED"));
+
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+
+
+		UE_LOG(LogTemp, Warning, TEXT("IA Triggered"));
+
+		if (CurrentView == ROADVIEW)
+		{
+			SelectView(BIRDVIEW);
+
+		}
+		else if (CurrentView == BIRDVIEW)
+		{
+			SelectView(ROADVIEW);
+		}
+
+	}
+
+}
+
+void AVrCharacter::Movement(const FInputActionValue& Value)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("BIRD HAS BEEN CALLED"));
+
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+
+
+		UE_LOG(LogTemp, Warning, TEXT("IA Triggered"));
+
+		if (Motion == MOVING)
+		{
+			PauseMovement();
+
+		}
+		else if (Motion == STOPPED)
+		{
+			StartMovement();
+		}
+
+	}
+
+}
+
+
+
+void AVrCharacter::Ground(const FInputActionValue& Value)
+{
+
+	UE_LOG(LogTemp, Warning, TEXT("GROUND HAS BEEN CALLED"));
+
+	const bool CurrentValue = Value.Get<bool>();
+	if (!CurrentValue)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("IA Triggered - GROUND"));
+		SelectView(BIRDVIEW);
+	}
+	else
+	{
+		SelectView(ROADVIEW);
+	}
+
+}
