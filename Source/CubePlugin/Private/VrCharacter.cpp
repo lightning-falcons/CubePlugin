@@ -454,14 +454,7 @@ void AVrCharacter::Tick(float DeltaTime)
 		// Set the current odometry in the game state
 		// GetWorld()->GetGameState<ADynamicGameState>()->CurrentOdometry = Odometry[ScanIndex];
 		
-		// The Character should be set at the location PLUS 190 cm so they appear above the ground
-		if (Motion == MOVING)
-		{
-			// Only update the character location if they are supposed to be moving
-			SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment));
-		}
 
-		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
 
 		
 		// The clocktime is re-set
@@ -483,6 +476,21 @@ void AVrCharacter::Tick(float DeltaTime)
 
 		// Get the rotator, which describes the orientation of the character should face
 		FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+
+		// The Character should be set at the location PLUS 190 cm so they appear above the ground
+		if (Motion == MOVING)
+		{
+			// Only update the character location if they are supposed to be moving
+			SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment));
+
+			if (CurrentView == ROADVIEW)
+			{
+				AddActorLocalOffset(rot.GetInverse().RotateVector(FVector(0, OrthogonalX, OrthogonalY)));
+			}
+
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
 
 		// The local scan is loaded with the same position and orientation as the character
 		//GetWorld()->GetGameState<ADynamicGameState>()->LoadNext(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
@@ -539,6 +547,7 @@ void AVrCharacter::Tick(float DeltaTime)
 		{
 			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
 			SetActorRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
+
 		}
 	}
 
@@ -614,6 +623,51 @@ void AVrCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
 
 			PlayerEnhancedInputComponent->BindAction(ForwardTimeAction, ETriggerEvent::Started, this, &AVrCharacter::ForwardTime);
+
+		}
+
+		if (ToggleVideoVisibilityAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(ToggleVideoVisibilityAction, ETriggerEvent::Started, this, &AVrCharacter::ToggleVideoVisibility);
+
+		}
+
+		if (OrthogonalRightAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(OrthogonalRightAction, ETriggerEvent::Started, this, &AVrCharacter::OrthogonalRight);
+
+		}
+
+		if (OrthogonalLeftAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(OrthogonalLeftAction, ETriggerEvent::Started, this, &AVrCharacter::OrthogonalLeft);
+
+		}
+
+		if (OrthogonalUpAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(OrthogonalUpAction, ETriggerEvent::Started, this, &AVrCharacter::OrthogonalUp);
+
+		}
+
+		if (OrthogonalDownAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(OrthogonalDownAction, ETriggerEvent::Started, this, &AVrCharacter::OrthogonalDown);
 
 		}
 
@@ -761,6 +815,57 @@ void AVrCharacter::ForwardTime(const FInputActionValue& Value)
 
 }
 
+void AVrCharacter::ToggleVideoVisibility(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("VISIBILITY HAS BEEN CALLED"));
+
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		UVideoWidget* VideoWidget = (UVideoWidget*)ItemReferences2[0];
+		VideoWidget->ToggleVisibility();
+	}
+
+}
+
+void AVrCharacter::OrthogonalRight(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		OrthogonalX += 100.0;
+	}
+	
+}
+
+void AVrCharacter::OrthogonalLeft(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		OrthogonalX -= 100.0;
+	}
+}
+
+void AVrCharacter::OrthogonalUp(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		OrthogonalY += 100.0;
+	}
+	
+}
+
+void AVrCharacter::OrthogonalDown(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		OrthogonalY -= 100.0;
+	}
+}
+
 void AVrCharacter::SetTime(double Time)
 {
 	
@@ -778,14 +883,14 @@ void AVrCharacter::SetTime(double Time)
 		// We need to go back in time
 
 		// Need to change the ScanIndex (which will then set the position)
-		while (ClockTime < Odometry[ScanIndex][6])
+		while (ClockTime < Odometry[ScanIndex][6] && ScanIndex > 0)
 		{
 			ScanIndex -= 1;
 		}
 	}
 	else if (ClockTime > CurrentTime)
 	{
-		while (ClockTime > Odometry[ScanIndex][6])
+		while (ClockTime > Odometry[ScanIndex][6] && ScanIndex < Odometry.Num() - 3)
 		{
 			ScanIndex += 1;
 		}

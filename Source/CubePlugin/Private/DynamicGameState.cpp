@@ -2,6 +2,7 @@
 
 
 #include "DynamicGameState.h"
+#include "VrCharacter.h"
 
 #include <iostream>
 #include <sstream>
@@ -33,6 +34,7 @@ void ADynamicGameState::BeginPlay()
 	// Create an actor for the global and local maps
 	GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor( ALidarPointCloudActor::StaticClass() ));
 	DynamicActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
+	DynamicActorInterlaced = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 
 	// Create the Global Map Point Cloud from the file
 	GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
@@ -42,6 +44,8 @@ void ADynamicGameState::BeginPlay()
 	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.05;
 
 	DynamicActor->GetPointCloudComponent()->PointSize = 1;
+	DynamicActorInterlaced->GetPointCloudComponent()->PointSize = 1;
+
 
 
 	// Now we need to import the local maps
@@ -165,19 +169,53 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
 	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
+	// Check if we are at the last frame included already
+	// If so, revert the simulation to the very start
+	
+	if (ScanIndex >= TimeStamp.Num() - 2)
+	{
+		ResetSimulation();
+	}
+	
+
 	// Check if the clock time is such that the next frame should be loaded
 	if (ClockTime > TimeStamp[ScanIndex + 1])
 	{
 		// Load the next frame
 		ScanIndex += 1;
 
-		UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR)"));
+		// The Actor to be changed should be different depending on whether the scan is ODD or EVEN
+		if (ScanIndex % 2 == 0)
+		{
+			// Even Scan
+			// Change the normal actor
 
-		// Get the rotator, which describes the orientation of the character should face
-		FRotator rot = FRotator(-Odometry[ScanIndex][4], -Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+			UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - EVEN"));
 
-		// The local scan is loaded with the same position and orientation as the character
-		LoadNext(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
+			// Get the rotator, which describes the orientation of the character should face
+			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+
+			// The local scan is loaded with the same position and orientation as the character
+			LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActor);
+
+		}
+		else
+		{
+			// Odd Scan
+			// Change the interlaced actor
+
+			UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - ODD"));
+
+			// Get the rotator, which describes the orientation of the character should face
+			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+
+			// The local scan is loaded with the same position and orientation as the character
+			LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActorInterlaced);
+		}
+
+
+
+
 
 		// Print the time discrepancy
 		// double DiscrepantTime = Odometry[ScanIndex][6] - TimeStamp[ScanIndex];
@@ -189,7 +227,7 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 	
 }
 
-void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation )
+void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation, ALidarPointCloudActor* PointCloudActor )
 {
 
 	// std::ofstream myfile;
@@ -208,7 +246,7 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 		//	return;
 		}
 
-		DynamicActor->SetPointCloud(LoadedPointClouds[Index]);
+		PointCloudActor->SetPointCloud(LoadedPointClouds[Index]);
 
 
 		// THEN, set the locations of the point clouds using OFFSET
@@ -238,12 +276,13 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	}
 
 	// Set the parameters for the local point cloud
-	DynamicActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
-	DynamicActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
+	PointCloudActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
+	PointCloudActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
+
 	
 	// Set the location and rotation of the local point cloud
 	// The LIDAR point cloud is shifted 190 CM up from the character so it aligns with the global point cloud
-	DynamicActor->SetActorLocationAndRotation(FVector(CharacterLocation), LocalRotation, false, 0, ETeleportType::None);
+	PointCloudActor->SetActorLocationAndRotation(FVector(CharacterLocation), LocalRotation, false, 0, ETeleportType::None);
 
 }
 
@@ -289,12 +328,12 @@ void ADynamicGameState::SetTime(double Time)
 		// We need to go back in time
 
 		// Need to change the ScanIndex (which will then set the position)
-		while (ClockTime < Odometry[ScanIndex][6])
+		while (ClockTime < Odometry[ScanIndex][6] && ScanIndex > 0)
 		{
 			ScanIndex -= 1;
 		}
 	}
-	else if (ClockTime > CurrentTime)
+	else if (ClockTime > CurrentTime && ScanIndex < Odometry.Num() - 3)
 	{
 		while (ClockTime > Odometry[ScanIndex][6])
 		{
@@ -302,4 +341,17 @@ void ADynamicGameState::SetTime(double Time)
 		}
 	}
 
+}
+
+void ADynamicGameState::ResetSimulation()
+{
+	TArray<AActor*> FoundActors;
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
+	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
+
+	ControlledCharacter->SetTime(TimeStamp[0]);
+	SetTime(TimeStamp[0]);
+	UVideoWidget* VideoWidgetFound = (UVideoWidget*)ControlledCharacter->ItemReferences2[0];
+	VideoWidgetFound->SetTime(TimeStamp[0]);
 }

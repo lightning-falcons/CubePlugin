@@ -38,6 +38,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 #include "VrCharacter.generated.h"
 
 // Two types of views are allowed
@@ -113,6 +114,7 @@ private:
 	UPROPERTY()
 	TArray<TSubclassOf<UVideoWidget>> ItemReferences;
 
+public:
 	UPROPERTY()
 	TArray<UUserWidget *> ItemReferences2;
 
@@ -147,15 +149,46 @@ protected:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* ForwardTimeAction;
 
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* ToggleVideoVisibilityAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* OrthogonalRightAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* OrthogonalLeftAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* OrthogonalUpAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* OrthogonalDownAction;
+
 	void Bird(const FInputActionValue& Value);
 	void Ground(const FInputActionValue& Value);
 	void Movement(const FInputActionValue& Value);
 	void BackTime(const FInputActionValue& Value);
 	void ForwardTime(const FInputActionValue& Value);
+	void ToggleVideoVisibility(const FInputActionValue& Value);
+	void OrthogonalRight(const FInputActionValue& Value);
+	void OrthogonalLeft(const FInputActionValue& Value);
+	void OrthogonalUp(const FInputActionValue& Value);
+	void OrthogonalDown(const FInputActionValue& Value);
+
 
 public:
 	
 	void SetTime(double Time);
+
+private:
+
+	// These values indicate the orthogonal offsets applied to the
+	// character location as desired by the user keyboard inputs
+	UPROPERTY(EditAnywhere)
+	double OrthogonalX = 0.0;
+
+	UPROPERTY(EditAnywhere)
+	double OrthogonalY = 0.0;
 
 
 

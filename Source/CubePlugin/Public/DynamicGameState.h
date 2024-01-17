@@ -52,7 +52,7 @@ public:
 
 	void BeginPlay();
 	void Tick( float DeltaSeconds );
-	void LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation);
+	void LoadNext( FVector CharacterLocation, int Index, FRotator LocalRotation, ALidarPointCloudActor* PointCloudActor);
 
 	template <typename T>
 	static TArray<T> ExtractEvery(TArray<T> Array, int Per, int MaxLength = -1)
@@ -91,7 +91,7 @@ public:
 	TArray<TArray<double>> Odometry;
 
 	// Downsampling Rate
-	int DownSamplePer = 5;
+	int DownSamplePer = 1;
 
 	static TArray<FString> GetAllFilesInDirectory(const FString directory, const bool fullPath, const FString onlyFilesStartingWith, const FString onlyFilesWithExtension);
 
@@ -104,6 +104,9 @@ private:
 	UPROPERTY()
 	ALidarPointCloudActor* DynamicActor;
 
+	// This is used for displaying 2 point clouds at once
+	UPROPERTY()
+	ALidarPointCloudActor* DynamicActorInterlaced;
 
 	TArray<FString> filesInDirectory;
 
@@ -121,6 +124,8 @@ private:
 
 public:
 	void SetTime(double Time);
+
+	void ResetSimulation();
 
 
 };

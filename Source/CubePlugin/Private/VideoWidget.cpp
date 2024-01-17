@@ -39,6 +39,12 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	// Get the clock time as stored by the game state
 	ClockTime = GetWorld()->GetGameState<ADynamicGameState>()->ClockTime;
 
+	// Check if all the images have been exhausted
+	if (ImageIndex >= TimeStamp.Num() - 2)
+	{
+		GetWorld()->GetGameState<ADynamicGameState>()->ResetSimulation();
+	}
+
 	// Change the image shown only if the NEXT image time has been reached
 	if (Image && ClockTime > TimeStamp[ImageIndex + 1])
 	{
@@ -48,15 +54,11 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		ImageIndex += 1;
 
 		// Set the image
-		Image->SetVisibility(ESlateVisibility::Visible);
+		Image->SetVisibility(CurrentVisibility);
 		Image->SetBrushFromTexture(ImageTextures[ImageIndex]);
 		Image->SetOpacity(50.5f);
-		
-
 
 	}
-
-
 }
 
 void UVideoWidget::SetTime(double Time)
@@ -76,17 +78,29 @@ void UVideoWidget::SetTime(double Time)
 		// We need to go back in time
 
 		// Need to change the ScanIndex (which will then set the position)
-		while (Time < TimeStamp[6])
+		while (Time < TimeStamp[ImageIndex] && ImageIndex > 0)
 		{
 			ImageIndex -= 1;
 		}
 	}
 	else if (Time > CurrentTime)
 	{
-		while (Time > TimeStamp[6])
+		while (Time > TimeStamp[ImageIndex] && ImageIndex < TimeStamp.Num() - 1)
 		{
 			ImageIndex += 1;
 		}
 	}
 
+}
+
+void UVideoWidget::ToggleVisibility()
+{
+	if (CurrentVisibility == ESlateVisibility::Hidden)
+	{
+		CurrentVisibility = ESlateVisibility::Visible;
+	} 
+	else if (CurrentVisibility == ESlateVisibility::Visible)
+	{
+		CurrentVisibility = ESlateVisibility::Hidden;
+	}
 }

@@ -5,6 +5,8 @@
 #include "DynamicGameState.h"
 #include "VideoWidget.generated.h"
 
+enum VisibilityType {HIDDEN, VISIBLE};
+
 UCLASS(Abstract)
 class UVideoWidget : public UUserWidget
 {
@@ -29,7 +31,11 @@ protected:
 
 	double ClockTime;
 
+	ESlateVisibility CurrentVisibility = ESlateVisibility::Visible;
+
 public:
 	void SetTime(double Time);
+
+	void ToggleVisibility();
 
 };
