@@ -333,9 +333,9 @@ void ADynamicGameState::SetTime(double Time)
 			ScanIndex -= 1;
 		}
 	}
-	else if (ClockTime > CurrentTime && ScanIndex < Odometry.Num() - 3)
+	else if (ClockTime > CurrentTime)
 	{
-		while (ClockTime > Odometry[ScanIndex][6])
+		while (ClockTime > Odometry[ScanIndex][6] && ScanIndex < Odometry.Num() - 3)
 		{
 			ScanIndex += 1;
 		}

@@ -1,0 +1,35 @@
+# This is the config file for the VR playback of the point clouds
+
+[Loading]
+
+# The path to the folder containing the simulation data
+# data_path = "C:\Users\its\Documents\Unreal Projects\CubePlugin\Data"
+
+# The name of the odometry file
+odometry_name = "Odometry.csv"
+
+# The name of the global point cloud
+global_name = "Global Point Cloud.las"
+
+# The name of the folder containing the local point clouds
+local_name = "Local Point Clouds"
+
+# The name of the folder containing the images
+image_name = "Images"
+
+[VR Parameters]
+
+# The number of TOTAL imported frames
+number_frames = 300
+
+# Import at a rate of 1 per import_every frames
+import_every = 1
+
+# Playback at this times the realtime speed
+playback_speed = 1.0
+
+# Whether photos are imported for the video playback
+photo_import = true
+
+
+
