@@ -9,7 +9,7 @@ LiBACK (CubePlugin) is an Unreal Engine 5.0.3 (UE5) project designed to simultan
 
 Despite what the UE5 project name suggests, LiBACK (CubePlugin) is not in fact a plugin. The important files all live within the Source folder.
 
-LiBACK was only tested on the VIVE headset. However, after enabling the appropriate UE5 plugins, use with other headsets should be possible.
+LiBACK was only tested on the VIVE headset. However, after enabling the appropriate UE5 plugins, use with other headsets should be possible. The specifications on which the test was performed: Windows 11, RTX 4090 GPU, i9-14900KF processor, 64 GB RAM. Set the configuration file appropriately according to your hardware availabilities.
 
 ## Example
 The following images are screenshots of the sVR playback of point clouds in Katoomba.
@@ -82,5 +82,30 @@ LiBACK incorporates a large number of convenient keyboard shortcuts during runti
 | A | Move the camera left by one metre. |
 | D | Move the camera right by one metre. |
 
+### Installation Instructions (Windows 11)
+1. Go to [Download Unreal Engine](https://www.unrealengine.com/en-US/download) and following instructions to install UE 5.0.3
+2. Install VS Code 2022 from the following link https://visualstudio.microsoft.com/vs/ and during installation, make sure to tick all the options for “Desktop & Mobile” as well as tick the “Game Development with C++”
+3. Install git and git bash from https://gitforwindows.org/ opting to use VS Code 2022 as the default editor and `main` for the default branch name
+4. Find the `Unreal Projects` folder, which is usually located in the `Documents` folder, and open git bash and `cd` into that folder
+5. `git clone` this project
+6. Find the UnrealVersionSelector tool and copy it into the `Epic Games\UE_5.0\Engine\Binaries\Win64` folder
+7. Run the **newly copied** UnrealVersionSelector
+8. Left click on the UPROJECT file then right click. Click “Show More Options” then click “Generate Visual Studio Project Files”
+9. Install steam (if not using the VIVE headset, follow instruction for your particular headset) and connect the VR headset appropriately
+10. Install SteamVR (you may also need to install Vive Console for SteamVR)
+11. Follow prompted instructions to setup the play area
+12. Open this project in Unreal Engine, then enable the SteamVR, OpenXR and Lidar Point Cloud plugins
+13. Open the solution file in VS Code 2022 and press CTRL+SHIFT+B to build the project
 
+### Running the Project for New Data
+1. Create a folder (for example, `Data`) that contains all the data files that you will be using. This folder is best placed inside the project (CubePlugin) folder.
+2. Paste the odometry file into the folder, ensuring that it follows the specified format.
+3. Paste the global point cloud into the folder, ensuring that it is in the .las format.
+4. Create a folder for the local point clouds and paste all the local point clouds in the folder. **There must be an EXACT ONE TO ONE correspondence between the local point clouds and the odometry readings for the local point clouds to be properly aligned with the global point cloud.** Each local point cloud must have a file name that is exactly the timestamp in *seconds*. Use a floating point number.
+5. Create a folder for the images and paste all the images in the folder. There is no requirement on any time correspondence between the point clouds or odometry with the images. However, each image must be a .png file with the name as the timestamp in **nanoseconds**.
+6. Change the configuration file to reflect the locations of the data
+7. Change the other parameters of the configuration file. Note: Importing 300 frames with video enabled took around 20 seconds on our hardware. Reduce the number of frames imported and downsample (by increasing `import_every`) as necessary. Note that `photo_import` MUST be set to false if no images are available
+8. Open the project in unreal engine. Import the LevelWithCharacter Level from the Contents Drawer, the Contents folder (double click on it)
+9. Click the play button (either selected viewport or VR preview)
 
+Note that for the images and local point clouds you are recommended to ensure they are in increasing order of the timestamps. No guarantees on the correct functioning of the project if this is not the case.
