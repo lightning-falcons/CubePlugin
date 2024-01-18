@@ -67,3 +67,20 @@ The Head Mounted Display (HMD) of the VIVE headset determines the orientation of
 
 Please note that the HMD needs to be detected by the VR sensor units in order to control the orientation of the character camera. 
 
+### Keyboard Controls
+LiBACK incorporates a large number of convenient keyboard shortcuts during runtime (while the playback is in progress) to access certain functionality. The functionality that is included was selected on the basis of user experience, comfort, and scene reproduction and interrogation.
+
+| Key | Description |
+| --- | --- |
+| &#8593; | Toggle between road (vehicle) perspective and the bird's eye perspective. The video is automatically set to disabled when the bird's eye persepctive is enabled. |
+| &#8595; | Toggle the movement of the camera (paused or fixed with data collection device). The position becomes fixed but the orientation still changes. Do not toggle between road and bird's eye perspectives when the position is fixed as it will lead to undesired results. |
+| &#8592; | Wind back time by one second (real-life time, regardless of the playback speed). If the beginning of the data is reached, the starting scene will be displayed until the display time of subsequent data is reached. |
+| &#8594; | Wind forward time by one second (real-life time, regardless of the playback speed). If the end of the data is reached, the playback will re-start from the beginning. |
+| V | Toggle the visibility of the video. |
+| W | Move the camera upwards by one metre. |
+| S | Move the camera down by one metre. |
+| A | Move the camera left by one metre. |
+| D | Move the camera right by one metre. |
+
+
+
