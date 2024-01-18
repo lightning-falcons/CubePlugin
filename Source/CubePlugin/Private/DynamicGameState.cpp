@@ -15,18 +15,83 @@ ADynamicGameState::ADynamicGameState()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
+	// Read the file
+	data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\config.toml");
+	loading = toml::find(data, "Loading");
+	params = toml::find(data, "VR_Parameters");
+
+	// Need in constructor, should be one the first things loaded
+	NumberFrames = toml::find<int>(params, "number_frames");
+
+	// Set the playback speed ratio
+	PlaybackSpeed = toml::find<double>(params, "playback_speed");
+
+	DownSamplePer = toml::find<int>(params, "import_every");
+
+	PhotoImport = toml::find<bool>(params, "photo_import");
+
+	// Odometry Data Path
+	std::string DataPath = toml::find<std::string>(loading, "data_path");
+	std::string OdometryPath = toml::find<std::string>(loading, "odometry_name");
+
+	FullOdometryPath = DataPath;
+	FullOdometryPath /= OdometryPath;
+
+	// Video Path
+	std::string ImagePath = toml::find<std::string>(loading, "image_name");
+	
+	FullImagePath = DataPath;
+	FullImagePath /= ImagePath;
+
 }
+
 
 void ADynamicGameState::BeginPlay()
 {
 	Super::BeginPlay();
 
+
+
+	
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The odometry source is : %s "), *FString(FullOdometryPath.c_str()));
+
+
+
+	/*
+	std::string OdometryPath = toml::find<std::string>(loading, "odometry_name");
+	auto GlobalPath = toml::find<std::string>(loading, "global_name");
+	auto LocalPath = toml::find<std::string>(loading, "local_name");
+	auto ImagePath = toml::find<std::string>(loading, "image_name");
+
+	auto NumberFrames = toml::find<int>(params, "number_frames");
+	auto ImportEvery = toml::find<int>(params, "import_every");
+	auto PlaybackSpeed = toml::find<double>(params, "playback_speed");
+	auto PhotoImport = toml::find<bool>(params, "photo_import");
+
+
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The odometry source is : %s "), *FString(OdometryPath.c_str()));
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The global source is : %s "), *FString(GlobalPath.c_str()));
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The local source is : %s "), *FString(LocalPath.c_str()));
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The image source is : %s "), *FString(ImagePath.c_str()));
+
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The number of frames is : %d "), NumberFrames);
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The import every is : %d "), ImportEvery);
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The playback speed is : %d "), PlaybackSpeed);
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The photo import is : %d "), PhotoImport);
+	*/
+
+	// Parse the data
 	// ClockTime = 0;
 	ScanIndex = -1;
 
 	// ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
 	
-	const FString PathToFile = FString("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Global Point Cloud.las");
+	std::string DataPath = toml::find<std::string>(loading, "data_path");
+	std::string GlobalPath = toml::find<std::string>(loading, "global_name");
+	std::filesystem::path FullGlobalPath = DataPath;
+	FullGlobalPath /= GlobalPath;
+	const FString PathToFile = FString(FullGlobalPath.c_str());
+	//const FString PathToFile = FString("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Global Point Cloud.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\colour.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\cudal_short_parsed.las");
 
@@ -51,15 +116,22 @@ void ADynamicGameState::BeginPlay()
 	// Now we need to import the local maps
 	//FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
 
-	FString directoryToSearch = TEXT("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Local Point Clouds");
+
+	std::string LocalPath = toml::find<std::string>(loading, "local_name");
+	std::filesystem::path FullLocalPath = DataPath;
+	FullLocalPath /= LocalPath;
+	
+	FString directoryToSearch = FString(FullLocalPath.c_str());
+	//FString directoryToSearch = TEXT("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Local Point Clouds");
 	FString filesStartingWith = TEXT("");
 	FString fileExtensions = TEXT("las");
 
 	// Get all the las files
 	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
 
+
 	// Select every nth file, limit to m files
-	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, 300);
+	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, NumberFrames);
 
 	// Load each point cloud and also get the time stamp
 	for (auto it : filesInDirectory)
@@ -160,7 +232,7 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
 	// Local tracking of passed time
-	ClockTime += DeltaSeconds * 1.0;
+	ClockTime += DeltaSeconds * PlaybackSpeed;
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
@@ -279,10 +351,26 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	PointCloudActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
 	PointCloudActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
 
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
+	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
+
+	if (ControlledCharacter->CurrentView == BIRDVIEW)
+	{
+		PointCloudActor->GetPointCloudComponent()->PointSize = 0.5;
+	}
+	else
+	{
+		PointCloudActor->GetPointCloudComponent()->PointSize = 1;
+	}
+		
+
 	
 	// Set the location and rotation of the local point cloud
 	// The LIDAR point cloud is shifted 190 CM up from the character so it aligns with the global point cloud
 	PointCloudActor->SetActorLocationAndRotation(FVector(CharacterLocation), LocalRotation, false, 0, ETeleportType::None);
+
+
 
 }
 

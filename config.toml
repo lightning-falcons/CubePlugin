@@ -1,9 +1,12 @@
 # This is the config file for the VR playback of the point clouds
+# Note: After launching CubePlugin, the "LevelWithCharacter" level
+# must be loaded
 
 [Loading]
 
 # The path to the folder containing the simulation data
-# data_path = "C:\Users\its\Documents\Unreal Projects\CubePlugin\Data"
+data_path = "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data"
+# data_path = "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Chippendale"
 
 # The name of the odometry file
 odometry_name = "Odometry.csv"
@@ -17,7 +20,7 @@ local_name = "Local Point Clouds"
 # The name of the folder containing the images
 image_name = "Images"
 
-[VR Parameters]
+[VR_Parameters]
 
 # The number of TOTAL imported frames
 number_frames = 300
@@ -29,6 +32,7 @@ import_every = 1
 playback_speed = 1.0
 
 # Whether photos are imported for the video playback
+# This must be set to false if there are no images available
 photo_import = true
 
 

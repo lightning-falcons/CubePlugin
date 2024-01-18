@@ -31,6 +31,8 @@ public class CubePlugin : ModuleRules
             new string[] {
 				// ... add public include paths required here ...
 				"..\\Plugins\\Enterprise\\LidarPointCloud\\Source\\LidarPointCloudRuntime\\Public",
+                // "C:\\Users\\its\\Downloads\\toml11-master\\toml11-master",
+                "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\toml11-master",
             }
             );
 

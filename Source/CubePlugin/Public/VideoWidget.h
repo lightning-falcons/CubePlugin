@@ -31,9 +31,10 @@ protected:
 
 	double ClockTime;
 
+public:
+
 	ESlateVisibility CurrentVisibility = ESlateVisibility::Visible;
 
-public:
 	void SetTime(double Time);
 
 	void ToggleVisibility();

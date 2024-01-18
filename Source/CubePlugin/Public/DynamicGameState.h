@@ -36,6 +36,16 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+
+// Meed to avoid macro conflict
+#pragma push_macro("check")   // store 'check' macro current definition
+#undef check  // undef to avoid conflicts
+#include "toml.hpp"
+// #include "C:\\Users\\its\\Downloads\\toml11-master\\toml11-master\\toml.hpp"
+#pragma pop_macro("check")  // restore definition
+
+#include <filesystem>
+
 #include "DynamicGameState.generated.h"
 
 /**
@@ -127,5 +137,17 @@ public:
 
 	void ResetSimulation();
 
+	// This contains the config file information
+	toml::value data;
+	toml::value loading;
+	toml::value params;
+
+	std::filesystem::path FullOdometryPath;
+	std::filesystem::path FullImagePath;
+
+
+	double PlaybackSpeed;
+	int NumberFrames;
+	bool PhotoImport;
 
 };

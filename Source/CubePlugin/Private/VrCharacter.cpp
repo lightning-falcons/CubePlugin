@@ -143,8 +143,8 @@ void AVrCharacter::BeginPlay()
 	std::ifstream source;                    // build a read-Stream
 
 	//source.open("C:\\Users\\admin\\Desktop\\Input Data\\odom.txt");  // open data
-	source.open("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Odometry.csv");
-
+	// source.open("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Odometry.csv");
+	source.open(GetWorld()->GetGameState<ADynamicGameState>()->FullOdometryPath);
 
 	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
 
@@ -211,7 +211,7 @@ void AVrCharacter::BeginPlay()
 	// i.e so that there is 1:1 correspondence between LIDAR scan and odometry reading
 	// We are setting the Odometry variable for the game state, not the character
 	int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
-	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, 300);
+	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, GetWorld()->GetGameState<ADynamicGameState>()->NumberFrames);
 
 	//Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 
@@ -322,7 +322,7 @@ void AVrCharacter::Tick(float DeltaTime)
 
 	// Check whether any valid UVideoWidget subclass object has been found, and if
 	// it is the first time that has happened, set the widget class
-	if (ItemReferences2.Num() > 0 && !VideoWidgetSet && ItemReferences2[0] != nullptr)
+	if (ItemReferences2.Num() > 0 && !VideoWidgetSet && ItemReferences2[0] != nullptr && GetWorld()->GetGameState<ADynamicGameState>()->PhotoImport)
 	{
 		// Connect the widget component to the character
 		VideoWidgetComponent->SetupAttachment(RootComponent);
@@ -427,7 +427,7 @@ void AVrCharacter::Tick(float DeltaTime)
 	// relative or absolute orientation
 	bool RelativeOrientation = true;
 
-	Super::Tick(DeltaTime * 1.0);
+	Super::Tick(DeltaTime * GetWorld()->GetGameState<ADynamicGameState>()->PlaybackSpeed);
 
 	// Local tracking of passed time
 	// ClockTime += DeltaTime;
@@ -540,13 +540,17 @@ void AVrCharacter::Tick(float DeltaTime)
 		{
 			FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
 			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot.GetInverse());
-			SetActorRotation(hmdRotation.Rotator() + rot.GetInverse() + FRotator(PitchAdjustment, 0.0, 0.0));
+			// SetActorRotation(hmdRotation.Rotator() + rot.GetInverse() + FRotator(PitchAdjustment, 0.0, 0.0));
+			SetActorRotation(rot.GetInverse()); // The character ROTATES to face the direction of movement
+			CameraComp->SetRelativeRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0)); // The camera rotates according to the headset
 
 		}
 		else
 		{
 			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
-			SetActorRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
+			// SetActorRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
+			CameraComp->SetRelativeRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
+
 
 		}
 	}
@@ -724,6 +728,9 @@ void AVrCharacter::Bird(const FInputActionValue& Value)
 		if (CurrentView == ROADVIEW)
 		{
 			SelectView(BIRDVIEW);
+
+			// For the bird view, turn off the video
+			((UVideoWidget*)ItemReferences2[0])->CurrentVisibility = ESlateVisibility::Hidden;
 
 		}
 		else if (CurrentView == BIRDVIEW)
