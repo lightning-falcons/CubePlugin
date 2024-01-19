@@ -109,3 +109,18 @@ LiBACK incorporates a large number of convenient keyboard shortcuts during runti
 9. Click the play button (either selected viewport or VR preview)
 
 Note that for the images and local point clouds you are recommended to ensure they are in increasing order of the timestamps. No guarantees on the correct functioning of the project if this is not the case.
+
+### Odometry File Format
+The following file format is compulsory for the odometry csv file. Do NOT include any headers.
+
+| Any number | Timestamp in nanoseconds | x | y | z | Roll | Pitch | Yaw |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
+The start of an example file is shown below.
+
+```
+0,1.68845145698648e+18,-0.188877046108,-0.19570992887,-1.94109928608,-3.5614618739227173,2.3413644750869143,0.25288259174816863
+0,1.68845145698648e+18,-0.188877046108,-0.19570992887,-1.94109928608,-3.5614618739227173,2.3413644750869143,0.25288259174816863
+0,1.68845145698648e+18,-0.188877046108,-0.19570992887,-1.94109928608,-3.5614618739227173,2.3413644750869143,0.25288259174816863
+0,1.68845145698648e+18,-0.188877046108,-0.19570992887,-1.94109928608,-3.5614618739227173,2.3413644750869143,0.25288259174816863
+```
