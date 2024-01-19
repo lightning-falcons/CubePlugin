@@ -113,6 +113,8 @@ Note that for the images and local point clouds you are recommended to ensure th
 ### Odometry File Format
 The following file format is compulsory for the odometry csv file. Do NOT include any headers.
 
+Please note: the roll, pitch and yaw should be in the `XYZ` format.
+
 | Any number | Timestamp in nanoseconds | x | y | z | Roll | Pitch | Yaw |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
