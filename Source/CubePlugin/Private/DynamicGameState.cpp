@@ -25,10 +25,16 @@ ADynamicGameState::ADynamicGameState()
 
 	// Set the playback speed ratio
 	PlaybackSpeed = toml::find<double>(params, "playback_speed");
+	PlaybackSpeedConfigured = PlaybackSpeed;
 
 	DownSamplePer = toml::find<int>(params, "import_every");
 
 	PhotoImport = toml::find<bool>(params, "photo_import");
+
+	// Set the bird's eye view height
+	HeightBirds = toml::find<double>(params, "height_birds");
+	UE_LOG(LogTemp, Warning, TEXT("[TOML] The bird's eye view height is set as : %lf "), HeightBirds);
+
 
 	// Odometry Data Path
 	std::string DataPath = toml::find<std::string>(loading, "data_path");
@@ -43,19 +49,20 @@ ADynamicGameState::ADynamicGameState()
 	FullImagePath = DataPath;
 	FullImagePath /= ImagePath;
 
+	// Point cloud sizes
+	LocalGroundSize = toml::find<double>(params, "local_ground_size");
+	LocalBirdSize = toml::find<double>(params, "local_bird_size");
+	GlobalGroundSize = toml::find<double>(params, "global_ground_size");
+	GlobalBirdSize = toml::find<double>(params, "global_bird_size");
+
 }
 
 
 void ADynamicGameState::BeginPlay()
 {
 	Super::BeginPlay();
-
-
-
 	
 	UE_LOG(LogTemp, Warning, TEXT("[TOML] The odometry source is : %s "), *FString(FullOdometryPath.c_str()));
-
-
 
 	/*
 	std::string OdometryPath = toml::find<std::string>(loading, "odometry_name");
@@ -170,7 +177,14 @@ void ADynamicGameState::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADirectionalLight::StaticClass(), DirectionalLight);
 	((ADirectionalLight*)DirectionalLight[0])->SetLightColor(FLinearColor(0, 0, 0));
 
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
+	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
 
+	// Set the point clouds first
+	GlobalMapActor->SetPointCloud(GlobalMap);
+	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
+	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 }
 
 /**
@@ -222,10 +236,24 @@ TArray<FString> ADynamicGameState::GetAllFilesInDirectory(const FString director
 	return files;
 }
 
-void ADynamicGameState::Tick( float DeltaSeconds )
+void ADynamicGameState::Tick(float DeltaSeconds)
 {
-	
+
 	g_num_mutex.lock();
+
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
+	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
+
+	// Set the PlayBack speed depending on whether the VR Character is stopped or moving
+	if (ControlledCharacter->Motion == STOPPED)
+	{
+		PlaybackSpeed = 0.0;
+	}
+	else if (ControlledCharacter->Motion == MOVING)
+	{
+		PlaybackSpeed = PlaybackSpeedConfigured;
+	}
 
 	// The GameState itself doesn't actually do anything on each tick
 	// Instead, the VRCharacter controls what is displayed
@@ -236,10 +264,30 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
-	// Set the point clouds first
-	GlobalMapActor->SetPointCloud(GlobalMap);
-	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
-	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
+
+
+	// Hide all actors within 1 m of the camera
+
+	TFunction<void(FLidarPointCloudPoint* Point)> pFuncRef = [this](FLidarPointCloudPoint* Point) { HidePoint(Point); };
+	if (DynamicActor)
+	{
+		DynamicActor->GetPointCloudComponent()->SetVisibilityOfPointsInSphere(false, FSphere(ControlledCharacter->GetActorLocation(), 150.0));
+	}
+
+	if (DynamicActorInterlaced)
+	{
+		DynamicActorInterlaced->GetPointCloudComponent()->SetVisibilityOfPointsInSphere(false, FSphere(ControlledCharacter->GetActorLocation(), 150.0));
+	}
+
+
+	if (ControlledCharacter->CurrentView == BIRDVIEW)
+	{
+		GlobalMapActor->GetPointCloudComponent()->PointSize = GlobalBirdSize;
+	}
+	else
+	{
+		GlobalMapActor->GetPointCloudComponent()->PointSize = GlobalGroundSize;
+	}
 
 	// Check if we are at the last frame included already
 	// If so, revert the simulation to the very start
@@ -251,10 +299,21 @@ void ADynamicGameState::Tick( float DeltaSeconds )
 	
 
 	// Check if the clock time is such that the next frame should be loaded
-	if (ClockTime > TimeStamp[ScanIndex + 1])
+	if ((ClockTime > TimeStamp[ScanIndex + 1]) || ImmediateReload || ImmediateReloadSecond)
 	{
-		// Load the next frame
-		ScanIndex += 1;
+
+		if (!ImmediateReload)
+		{
+			// Load the next frame
+			ScanIndex += 1;
+			ImmediateReloadSecond = false;
+		}
+		else
+		{
+			ImmediateReload = false;
+			ScanIndex -= 1;
+		}
+
 
 		// The Actor to be changed should be different depending on whether the scan is ODD or EVEN
 		if (ScanIndex % 2 == 0)
@@ -318,6 +377,8 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 		//	return;
 		}
 
+		
+
 		PointCloudActor->SetPointCloud(LoadedPointClouds[Index]);
 
 
@@ -325,22 +386,29 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 		LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates + FVector(0, 0, 190));
 
 		// Get the individual points
-		// LoadedPointClouds[Index]->GetPoints(Points);
+		//LoadedPointClouds[Index]->GetPoints(Points);
 
 		// Iterate through the points
 		/*
 		for (auto it : Points)
 		{
 
+			// UE_LOG(LogTemp, Warning, TEXT("PDIP"));
+
 			// Apply the location to each point
-			it->Location += FVector3f(0.f, 0.f, 190.f);
+			// it->Location += FVector3f(0.f, 0.f, 190.f);
+			// it->Color = FColor(255.f, 0.f, 0.f);
+
+			// it->bVisible = 0;
 
 		}
+		*/
+
 	
 
 		Points.Empty();
 
-		*/
+		
 	
 	} catch ( ... ) {
 		UE_LOG(LogTemp, Warning, TEXT("CAUGHT"));
@@ -357,13 +425,14 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 
 	if (ControlledCharacter->CurrentView == BIRDVIEW)
 	{
-		PointCloudActor->GetPointCloudComponent()->PointSize = 0.5;
+		PointCloudActor->GetPointCloudComponent()->PointSize = LocalBirdSize;
 	}
 	else
 	{
-		PointCloudActor->GetPointCloudComponent()->PointSize = 1;
+		PointCloudActor->GetPointCloudComponent()->PointSize = LocalGroundSize;
 	}
 		
+	
 
 	
 	// Set the location and rotation of the local point cloud
@@ -443,3 +512,10 @@ void ADynamicGameState::ResetSimulation()
 	UVideoWidget* VideoWidgetFound = (UVideoWidget*)ControlledCharacter->ItemReferences2[0];
 	VideoWidgetFound->SetTime(TimeStamp[0]);
 }
+
+void ADynamicGameState::HidePoint(FLidarPointCloudPoint* Point)
+{
+	Point->Color = FColor(255.f, 0.f, 0.f);
+	Point->bVisible = 0;
+}
+

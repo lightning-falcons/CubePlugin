@@ -71,15 +71,21 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	double ClockTime;
-	int ScanIndex; // Position Number to Move
 
+	// Current time
+	double ClockTime;
+
+	// The array index for the local maps that we are up to
+	int ScanIndex;
+
+	// 2D array of odometry data
 	TArray<TArray<double>> Odometry;
 
-
+	// Spring arm component connected to character
 	UPROPERTY(EditAnywhere)
 	class USpringArmComponent* SpringArmComp;
 
+	// Camera component connected to spring arm component
 	UPROPERTY(EditAnywhere)
 	class UCameraComponent* CameraComp;
 
@@ -131,14 +137,16 @@ public:
 
 protected:
 
+	// Input mapping context that is applied to the character 
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputMappingContext* VRMappingContext;
 
+	// Input action for toggling between bird's eye view and the ground
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* BirdAction;
 
-	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
-	UInputAction* GroundAction;
+	// UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	// UInputAction* GroundAction;
 
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* MovementAction;
@@ -178,7 +186,13 @@ protected:
 
 public:
 	
+	// Set the playback time and adjust the scene to match that time
+	// The scene should be specifically chosen, not played back until it is correct 
 	void SetTime(double Time);
+
+	// Immediately reload the VRCharacter position, without needing to move between
+	// data points. Would usually be used when the time has been manually changed.
+	bool ImmediateReload = false;
 
 private:
 

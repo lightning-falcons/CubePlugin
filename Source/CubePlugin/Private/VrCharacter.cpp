@@ -443,13 +443,20 @@ void AVrCharacter::Tick(float DeltaTime)
 
 
 	// This is a temporary feature where we move a frame every 0.1 s.
-	if (ClockTime > TimeStampOdometry[ScanIndex + 1] && ScanIndex < 29900)
+	if ((ClockTime > TimeStampOdometry[ScanIndex + 1] && ScanIndex < 29900) || ImmediateReload)
 	{
 
 		UE_LOG(LogTemp, Warning, TEXT("MOVING TO NEXT FRAME..."));
 
-		// Iterate to the next frame
-		ScanIndex += 1;
+		// Iterate to the next frame only if not immediate reload
+		if (!ImmediateReload)
+		{
+			ScanIndex += 1;
+		}
+		else
+		{
+			ImmediateReload = false;
+		}
 
 		// Set the current odometry in the game state
 		// GetWorld()->GetGameState<ADynamicGameState>()->CurrentOdometry = Odometry[ScanIndex];
@@ -478,14 +485,14 @@ void AVrCharacter::Tick(float DeltaTime)
 		FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
 
 		// The Character should be set at the location PLUS 190 cm so they appear above the ground
-		if (Motion == MOVING)
+		// if (Motion == MOVING)
 		{
 			// Only update the character location if they are supposed to be moving
 			SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment));
 
 			if (CurrentView == ROADVIEW)
 			{
-				AddActorLocalOffset(rot.GetInverse().RotateVector(FVector(0, OrthogonalX, OrthogonalY)));
+				AddActorLocalOffset(rot.GetInverse().RotateVector(FVector(0.0, OrthogonalX, OrthogonalY)));
 			}
 
 		}
@@ -599,7 +606,7 @@ void AVrCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			UE_LOG(LogTemp, Warning, TEXT("BA Bound"));
 
 			PlayerEnhancedInputComponent->BindAction(BirdAction, ETriggerEvent::Started, this, &AVrCharacter::Bird);
-			PlayerEnhancedInputComponent->BindAction(BirdAction, ETriggerEvent::Canceled, this, &AVrCharacter::Ground);
+			// PlayerEnhancedInputComponent->BindAction(BirdAction, ETriggerEvent::Canceled, this, &AVrCharacter::Ground);
 
 		}
 
@@ -693,7 +700,7 @@ void AVrCharacter::SelectView(ViewType View)
 
 	if (View == BIRDVIEW)
 	{
-		ZAdjustment = 5000.0;
+		ZAdjustment = GetWorld()->GetGameState<ADynamicGameState>()->HeightBirds;
 		PitchAdjustment = 270.0;
 	}
 	else if (View == ROADVIEW)
@@ -769,7 +776,7 @@ void AVrCharacter::Movement(const FInputActionValue& Value)
 }
 
 
-
+/*
 void AVrCharacter::Ground(const FInputActionValue& Value)
 {
 
@@ -787,6 +794,7 @@ void AVrCharacter::Ground(const FInputActionValue& Value)
 	}
 
 }
+*/
 
 void AVrCharacter::BackTime(const FInputActionValue& Value)
 {
@@ -894,6 +902,13 @@ void AVrCharacter::SetTime(double Time)
 		{
 			ScanIndex -= 1;
 		}
+
+		// Now reload
+		ImmediateReload = true;
+		GetWorld()->GetGameState<ADynamicGameState>()->ImmediateReload = true;
+		GetWorld()->GetGameState<ADynamicGameState>()->ImmediateReloadSecond = true;
+		((UVideoWidget*)ItemReferences2[0])->ImmediateReload = true;
+
 	}
 	else if (ClockTime > CurrentTime)
 	{
@@ -901,6 +916,14 @@ void AVrCharacter::SetTime(double Time)
 		{
 			ScanIndex += 1;
 		}
+
+		// Now reload
+		ImmediateReload = true;
+		GetWorld()->GetGameState<ADynamicGameState>()->ImmediateReload = true;
+		GetWorld()->GetGameState<ADynamicGameState>()->ImmediateReloadSecond = true;
+		((UVideoWidget*)ItemReferences2[0])->ImmediateReload = true;
+
+
 	}
 
 }

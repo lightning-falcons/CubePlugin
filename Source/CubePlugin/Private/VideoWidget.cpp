@@ -52,12 +52,19 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		}
 
 		// Change the image shown only if the NEXT image time has been reached
-		if (Image && ClockTime > TimeStamp[ImageIndex + 1])
+		if ((Image && ClockTime > TimeStamp[ImageIndex + 1]) || ImmediateReload)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("TICKING..."));
 
-			// Increment the image used
-			ImageIndex += 1;
+			if (!ImmediateReload)
+			{
+				// Increment the image used
+				ImageIndex += 1;
+			}
+			else
+			{
+				ImmediateReload = false;
+			}
 
 			// Set the image
 			Image->SetVisibility(CurrentVisibility);

@@ -23,20 +23,30 @@ protected:
 
 	void NativeTick(const FGeometry& MyGeometry, float InDeltaTime);
 	
+	// Array of 2D textures, which are the images to be played over time
 	UPROPERTY()
 	TArray<UTexture2D*> ImageTextures;
 	
+	// Array of the timestamps corresponding to those images
 	TArray<double> TimeStamp;
+
+	// The array index we are up to currently for the images
 	int ImageIndex;
 
+	// Current time
 	double ClockTime;
 
 public:
 
+	// Set to store the current visibility status of video
 	ESlateVisibility CurrentVisibility = ESlateVisibility::Visible;
 
+	// Set the playback time and adjust the scene to match that time
 	void SetTime(double Time);
 
+	// Toggle between video hidden and visible
 	void ToggleVisibility();
+
+	bool ImmediateReload = false;
 
 };
