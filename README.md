@@ -127,3 +127,4 @@ The start of an example file is shown below.
 0,1.68845145698648e+18,-0.188877046108,-0.19570992887,-1.94109928608,-3.5614618739227173,2.3413644750869143,0.25288259174816863
 ```
 ## Acknowledgments
+This project could not be possible without the support of the ITS group including Dr Stewart Worrall, Dr Stephany Berrio Perez and Dr Mao Shan, who provided invaluable advice and support. The project is also partly funded by the Vacation Research Internship project at the University of Sydney and Transport for NSW. 
