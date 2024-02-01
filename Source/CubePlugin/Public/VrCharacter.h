@@ -26,12 +26,12 @@
 #include "UObject/Object.h"
 #include <UObject/ConstructorHelpers.h>
 #include <Engine/DataTable.h>
-#include "AssetRegistryModule.h"
+//#include "AssetRegistryModule.h"
 //#include "Ability/FOEffect.h"
 #include "Engine/Blueprint.h"
 #include "Modules/ModuleManager.h"
-#include "UObject/SoftObjectPtr.h"
-#include "AssetRegistryModule.h"
+// #include "UObject/SoftObjectPtr.h"
+//#include "AssetRegistryModule.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -39,6 +39,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "IXRTrackingSystem.h"
 #include "VrCharacter.generated.h"
 
 // Two types of views are allowed
@@ -112,10 +113,10 @@ public:
 
 private:
 	UPROPERTY()
-	class UVideoWidget* RealVideo;
+	class UVideoWidget* TestVideo;
 
-	UPROPERTY(EditAnywhere)
-	class UWidgetComponent* VideoWidgetComponent;
+	// UPROPERTY(EditAnywhere)
+	// class UWidgetComponent* VideoWidgetComponent;
 
 	UPROPERTY()
 	TArray<TSubclassOf<UVideoWidget>> ItemReferences;
@@ -172,15 +173,33 @@ protected:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* OrthogonalDownAction;
 
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void Bird(const FInputActionValue& Value);
+
 	void Ground(const FInputActionValue& Value);
+	
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void Movement(const FInputActionValue& Value);
+	
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void BackTime(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void ForwardTime(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void ToggleVideoVisibility(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OrthogonalRight(const FInputActionValue& Value);
+	
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OrthogonalLeft(const FInputActionValue& Value);
+	
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OrthogonalUp(const FInputActionValue& Value);
+	
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OrthogonalDown(const FInputActionValue& Value);
 
 
@@ -193,6 +212,13 @@ public:
 	// Immediately reload the VRCharacter position, without needing to move between
 	// data points. Would usually be used when the time has been manually changed.
 	bool ImmediateReload = false;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	FRotator PitchAdjustmentRotator;
+
+	// This is for tracing the odometry for debugging purpose, expose to blueprints
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Debugging)
+	FVector CurrentOdometryLocation;
 
 private:
 

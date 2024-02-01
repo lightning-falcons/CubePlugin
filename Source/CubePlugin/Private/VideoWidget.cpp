@@ -121,4 +121,6 @@ void UVideoWidget::ToggleVisibility()
 	{
 		CurrentVisibility = ESlateVisibility::Hidden;
 	}
+
+	Image->SetVisibility(CurrentVisibility);
 }

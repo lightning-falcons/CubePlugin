@@ -23,7 +23,10 @@ public class CubePlugin : ModuleRules
         PublicIncludePaths.AddRange(
             new string[] {
 				// ... add public include paths required here ...
-				"C:\\Program Files\\Epic Games\\UE_5.0\\Engine\\Plugins\\Enterprise\\LidarPointCloud\\Source\\LidarPointCloudRuntime\\Public",
+				"C:\\Program Files\\Epic Games\\UE_5.3\\Engine\\Plugins\\Enterprise\\LidarPointCloud\\Source\\LidarPointCloudRuntime\\Public",
+                //"C:\\Program Files\\Epic Games\\UE_5.3\\Engine\\**",
+                // "C:\\Program Files\\Epic Games\\UE_5.3\\Engine\\Source\\Runtime\\AssetRegistry\\Public\\AssetRegistry",
+                //"C:\\Program Files\\Epic Games\\UE_5.3\\Engine\\Source\\Runtime\\Core\\Public",
             }
             );
 
@@ -32,7 +35,7 @@ public class CubePlugin : ModuleRules
 				// ... add public include paths required here ...
 				"..\\Plugins\\Enterprise\\LidarPointCloud\\Source\\LidarPointCloudRuntime\\Public",
                 // "C:\\Users\\its\\Downloads\\toml11-master\\toml11-master",
-                "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\toml11-master",
+                "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\toml11-master",
             }
             );
 
@@ -53,6 +56,7 @@ public class CubePlugin : ModuleRules
                 "Landscape",
                 "UMG",
                 "EnhancedInput",
+                "HeadMountedDisplay",
             }
             );
 

@@ -16,7 +16,7 @@ ADynamicGameState::ADynamicGameState()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	// Read the file
-	data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\config.toml");
+	data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\config.toml");
 	loading = toml::find(data, "Loading");
 	params = toml::find(data, "VR_Parameters");
 
@@ -30,6 +30,8 @@ ADynamicGameState::ADynamicGameState()
 	DownSamplePer = toml::find<int>(params, "import_every");
 
 	PhotoImport = toml::find<bool>(params, "photo_import");
+
+	RollCorrection = toml::find<double>(loading, "roll_correction");
 
 	// Set the bird's eye view height
 	HeightBirds = toml::find<double>(params, "height_birds");
@@ -182,9 +184,14 @@ void ADynamicGameState::BeginPlay()
 	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
 
 	// Set the point clouds first
+	
 	GlobalMapActor->SetPointCloud(GlobalMap);
 	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
 	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
+	
+	// Correction to ensure odometry-global map alignment
+	GlobalMapActor->SetActorRotation(FRotator(0, 0, RollCorrection));
+	
 }
 
 /**
@@ -294,6 +301,18 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 	
 	if (ScanIndex >= TimeStamp.Num() - 2)
 	{
+		/*
+		PlaybackSpeed = 0;
+		PlaybackSpeedConfigured = 0;
+
+		for (auto it : LoadedPointClouds)
+		{
+			it->ConditionalBeginDestroy();
+		}
+		//LoadedPointClouds.Empty();
+		GEngine->ForceGarbageCollection();
+		*/
+
 		ResetSimulation();
 	}
 	
@@ -324,7 +343,11 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 			UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - EVEN"));
 
 			// Get the rotator, which describes the orientation of the character should face
-			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+			// FRotator rot = FRotator(Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
+
+			UE_LOG(LogTemp, Warning, TEXT("[Point Cloud Rotator - RAW ODOM] YAW %lf PITCH %lf ROLL %lf"), Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][4], Odometry[ScanIndex + 1][5]);
+			UE_LOG(LogTemp, Warning, TEXT("[Point Cloud Rotator] YAW %lf PITCH %lf ROLL %lf"), rot.Yaw, rot.Pitch, rot.Roll);
 
 			// The local scan is loaded with the same position and orientation as the character
 			LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActor);
@@ -338,7 +361,8 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 			UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - ODD"));
 
 			// Get the rotator, which describes the orientation of the character should face
-			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+			// FRotator rot = FRotator(Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
 
 			// The local scan is loaded with the same position and orientation as the character
 			LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActorInterlaced);
@@ -383,7 +407,7 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 
 
 		// THEN, set the locations of the point clouds using OFFSET
-		LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates + FVector(0, 0, 190));
+		LoadedPointClouds[Index]->SetLocationOffset(LoadedPointClouds[Index]->OriginalCoordinates);
 
 		// Get the individual points
 		//LoadedPointClouds[Index]->GetPoints(Points);
@@ -438,6 +462,7 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	// Set the location and rotation of the local point cloud
 	// The LIDAR point cloud is shifted 190 CM up from the character so it aligns with the global point cloud
 	PointCloudActor->SetActorLocationAndRotation(FVector(CharacterLocation), LocalRotation, false, 0, ETeleportType::None);
+	PointCloudActor->AddActorLocalOffset(FVector(0, 0, 190));
 
 
 

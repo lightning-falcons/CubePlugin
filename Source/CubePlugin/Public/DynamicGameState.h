@@ -172,4 +172,6 @@ public:
 	double GlobalBirdSize = 0.05;
 
 	void HidePoint(FLidarPointCloudPoint* Point);
+
+	double RollCorrection; // Global point cloud roll correction angle
 };

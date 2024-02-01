@@ -122,7 +122,7 @@ AVrCharacter::AVrCharacter()
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
-	VideoWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("widget component"));
+	// VideoWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("widget component"));
 
 }
 
@@ -143,7 +143,8 @@ void AVrCharacter::BeginPlay()
 	std::ifstream source;                    // build a read-Stream
 
 	//source.open("C:\\Users\\admin\\Desktop\\Input Data\\odom.txt");  // open data
-	// source.open("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Odometry.csv");
+	// source.open("C:\\Users\\its\\Documents\\Unreal Projects\\
+	// \\Data\\Odometry.csv");
 	source.open(GetWorld()->GetGameState<ADynamicGameState>()->FullOdometryPath);
 
 	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
@@ -168,6 +169,8 @@ void AVrCharacter::BeginPlay()
 		TempOdometry.Add(c);
 		//TempOdometry.Add(d);
 		TempOdometry.Add(time / 1000000000);
+
+		// UE_LOG(LogTemp, Warning, TEXT("[IMPORTING] YAW %lf PITCH %lf ROLL %lf"), a, b, c);
 
 		Odometry.Add(TempOdometry);
 		TimeStampOdometry.Add(time / 1000000000);
@@ -220,14 +223,14 @@ void AVrCharacter::BeginPlay()
 		UE_LOG(LogTemp, Warning, TEXT("FAILED TO GET CONTROLLER"));
 	}
 
-	// RealVideo = CreateWidget<UVideoWidget>((APlayerController*) UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
+	// TestVideo = CreateWidget<UVideoWidget>((APlayerController*) UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
 
 	/*
-	RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
+	TestVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
 
-	if (RealVideo)
+	if (TestVideo)
 	{
-		// RealVideo->AddToPlayerScreen();
+		// TestVideo->AddToPlayerScreen();
 	}
 	else {
 		UE_LOG(LogTemp, Warning, TEXT("NO WIDGET CREATED"));
@@ -249,7 +252,8 @@ void AVrCharacter::BeginPlay()
 	FARFilter Filter;
 	Filter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
 	Filter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
-	AssetRegistryModule.Get().GetAssets(Filter, BlueprintList);
+	
+	Module.Get().GetAssets(Filter, BlueprintList);
 
 	for (int32 AssetIdx = 0; AssetIdx < BlueprintList.Num(); ++AssetIdx)
 	{
@@ -303,10 +307,10 @@ void AVrCharacter::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("PC2"));
 
 			// PawnClientRestart can run more than once in an Actor's lifetime, so start by clearing out any leftover mappings.
-			Subsystem->ClearAllMappings();
+			// Subsystem->ClearAllMappings();
 
 			// Add each mapping context, along with their priority values. Higher values outprioritize lower values.
-			Subsystem->AddMappingContext(VRMappingContext, 0);
+			// Subsystem->AddMappingContext(VRMappingContext, 5);
 		}
 	}
 
@@ -319,90 +323,70 @@ void AVrCharacter::BeginPlay()
 void AVrCharacter::Tick(float DeltaTime)
 {
 
-
+	
 	// Check whether any valid UVideoWidget subclass object has been found, and if
 	// it is the first time that has happened, set the widget class
 	if (ItemReferences2.Num() > 0 && !VideoWidgetSet && ItemReferences2[0] != nullptr && GetWorld()->GetGameState<ADynamicGameState>()->PhotoImport)
 	{
+		
 		// Connect the widget component to the character
-		VideoWidgetComponent->SetupAttachment(RootComponent);
+		// VideoWidgetComponent->SetupAttachment(SpringArmComp);
 
 		// VideoWidgetComponent->SetOnlyOwnerSee(true);
 		// VideoWidgetComponent->SetIsReplicated(false);
+		/*
 		VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 		VideoWidgetComponent->SetDrawSize(FVector2D(1920, 1080));
 		VideoWidgetComponent->SetRelativeScale3D(FVector(1.f, 1.f, 1.f));
 		//VideoWidgetComponent->SetRelativeLocation(FVector(568.f, -607.f, 0.f));
-		VideoWidgetComponent->SetRelativeLocation(FVector(500.f, -800.f, -190.f));
+		VideoWidgetComponent->SetRelativeLocation(FVector(1000.f, -800.f, 190.f));
 		VideoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
 		VideoWidgetComponent->SetVisibility(true);
+
+		
 		VideoWidgetComponent->RegisterComponent();
+
+		
 
 		VideoWidgetComponent->SetWidgetClass(ItemReferences2[0]->GetClass());
 		VideoWidgetSet = true;
+		*/
 		// VideoWidgetComponent->SetOwnerPlayer(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 
 	}
 
 	// Preserve the relative position & orientation of the video
+	/*
 	VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
-	VideoWidgetComponent->SetRelativeLocation(FVector(500.f, -800.f, -190.f));
-
-	////////////////////////////////////////////////////
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-
-	// Retrieve all blueprint classes 
-	TArray<FAssetData> BlueprintList;
-
-	FARFilter Filter;
-	Filter.ClassNames.Add(UBlueprint::StaticClass()->GetFName());
-	Filter.ClassNames.Add(UBlueprintGeneratedClass::StaticClass()->GetFName());
-	AssetRegistryModule.Get().GetAssets(Filter, BlueprintList);
-
-	for (int32 AssetIdx = 0; AssetIdx < BlueprintList.Num(); ++AssetIdx)
-	{
-		if (BlueprintList[AssetIdx].GetAsset() != NULL)
-		{
-			if (UObject* ChildObject = Cast<UObject>(BlueprintList[AssetIdx].GetAsset()))
-			{
-				UBlueprint* BlueprintObj = Cast<UBlueprint>(StaticLoadObject(UBlueprint::StaticClass(), NULL, *ChildObject->GetPathName()));
-
-				if (BlueprintObj != NULL && BlueprintObj->GeneratedClass != NULL && BlueprintObj->GeneratedClass->GetDefaultObject() != NULL)
-				{
-					if (Cast<UVideoWidget>(BlueprintObj->GeneratedClass->GetDefaultObject()) != NULL)
-					{
-						ItemReferences.Add(*BlueprintObj->GeneratedClass);
-					}
-				}
-			}
-		}
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget."), ItemReferences.Num());
+	VideoWidgetComponent->SetRelativeLocation(FVector(1000.f, -800.f, 190.f));
+	*/
+	
 
 	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), ItemReferences2, UVideoWidget::StaticClass(), false);
+
+	
 
 	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget. [NewMethod]"), ItemReferences2.Num());
 
 
 	/////////////////////////////
 	/*
-	if (RealVideo == nullptr)
+	if (TestVideo == nullptr)
 	{
-		RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
+		TestVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
 	}
 	*/
 
 	/*
 
-	if (RealVideo == nullptr)
+	if (TestVideo == nullptr)
 	{
-		// RealVideo = CreateWidget<UVideoWidget>((APlayerController*)UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
-		RealVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
+		// TestVideo = CreateWidget<UVideoWidget>((APlayerController*)UGameplayStatics::GetPlayerController(GetWorld(), 0), VideoWidgetClass);
+		TestVideo = CreateWidget<UVideoWidget>(GetWorld(), VideoWidgetClass);
 
-		if (RealVideo)
+		if (TestVideo)
 		{
-			RealVideo->AddToPlayerScreen();
+			TestVideo->AddToPlayerScreen();
 		}
 		else if (VideoWidgetClass == nullptr)
 		{
@@ -482,20 +466,11 @@ void AVrCharacter::Tick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("The index of this scan: %i"), ScanIndex);
 
 		// Get the rotator, which describes the orientation of the character should face
-		FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+		//FRotator rot = FRotator(Odometry[ScanIndex][4], -Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+		FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
 
-		// The Character should be set at the location PLUS 190 cm so they appear above the ground
-		// if (Motion == MOVING)
-		{
-			// Only update the character location if they are supposed to be moving
-			SetActorLocation(FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment));
 
-			if (CurrentView == ROADVIEW)
-			{
-				AddActorLocalOffset(rot.GetInverse().RotateVector(FVector(0.0, OrthogonalX, OrthogonalY)));
-			}
-
-		}
+		
 
 		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
 
@@ -522,6 +497,36 @@ void AVrCharacter::Tick(float DeltaTime)
 		// ScanIndex += 1;
 
 	}
+	else
+	{
+		// Perform interpolation of position in between time points
+		double TimeEarly = TimeStampOdometry[ScanIndex];
+		double TimeLate = TimeStampOdometry[ScanIndex + 1];
+		double ProportionThrough;
+
+		// Check whether we are before the start
+		if (ClockTime > TimeEarly)
+		{
+			ProportionThrough = (ClockTime - TimeEarly) / (TimeLate - TimeEarly);
+		}
+		else
+		{
+			ProportionThrough = 0;
+		}
+
+		FVector LocationEarly = FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment);
+		FVector LocationLate = FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2] + 190.0 + ZAdjustment);
+
+
+		// The Character should be set at the location PLUS 190 cm so they appear above the ground
+		// if (Motion == MOVING)
+		{
+			// Only update the character location if they are supposed to be moving
+			SetActorLocation(LocationEarly + ProportionThrough * (LocationLate - LocationEarly));
+			AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
+
+		}
+	}
 	/*
 	if (ScanIndex == 299)
 	{
@@ -529,8 +534,10 @@ void AVrCharacter::Tick(float DeltaTime)
 	}
 	*/
 
+	CurrentOdometryLocation = FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]);
+
 	// Headset
-	
+	FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
 
 	// If the VR mode is on, the orientation should always be in the direction of the HMD
 	if (VROn && ScanIndex != -1)
@@ -539,24 +546,47 @@ void AVrCharacter::Tick(float DeltaTime)
 		// Get the HMD orientation
 		FQuat hmdRotation;
 		FVector hmdLocationOffset;
+
+		FQuat orientation;
+		FVector position;
+		//GEngine->XRSystem->GetHMDDevice()->GetCurrentOrientationAndPosition(orientation, position);
+
+
 		GEngine->XRSystem->GetCurrentPose(IXRTrackingSystem::HMDDeviceId, hmdRotation, hmdLocationOffset);
+		UE_LOG(LogTemp, Warning, TEXT("TRACKING STATUS %d"), GEngine->XRSystem->IsTracking(IXRTrackingSystem::HMDDeviceId));
+		UE_LOG(LogTemp, Warning, TEXT("#HEADSETS TRACKED %d"), GEngine->XRSystem->CountTrackedDevices());
+		UE_LOG(LogTemp, Warning, TEXT("THE ROTATION OF HEADSET (SECOND METHOD) IS %lf %lf %lf"), GEngine->XRSystem->GetBaseRotation().Pitch, GEngine->XRSystem->GetBaseRotation().Roll, GEngine->XRSystem->GetBaseRotation().Yaw);
+
+
+
+		UE_LOG(LogTemp, Warning, TEXT("THE ROTATION OF HEADSET IS %lf %lf %lf"), hmdRotation.Rotator().Pitch, hmdRotation.Rotator().Roll, hmdRotation.Rotator().Yaw);
+
+		//UE_LOG(LogTemp, Warning, TEXT("THE ROTATION OF HEADSET IS %lf %lf %lf (3rd)"), orientation.Rotator().Pitch, orientation.Rotator().Roll, orientation.Rotator().Yaw);
+
+		// IXRTrackingSystem Track = IXRTrackingSystem::HMDDeviceId;
+
+
+		PitchAdjustmentRotator = FRotator(FQuat(rot) * FQuat(FRotator(PitchAdjustment, 0.0, 0.0)));
 
 		// Set the orientation of the character
 		// SetActorRotation(hmdRotation);
 		if (RelativeOrientation)
 		{
-			FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+			// FRotator rot = FRotator(Odometry[ScanIndex][4], Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
 			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator() + rot.GetInverse());
 			// SetActorRotation(hmdRotation.Rotator() + rot.GetInverse() + FRotator(PitchAdjustment, 0.0, 0.0));
-			SetActorRotation(rot.GetInverse()); // The character ROTATES to face the direction of movement
-			CameraComp->SetRelativeRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0)); // The camera rotates according to the headset
+			SetActorRotation(rot); // The character ROTATES to face the direction of movement
+			// Product of quaternion ensures correct composition of rotations
+			CameraComp->SetRelativeRotation(FRotator(FQuat(FRotator(PitchAdjustment, 0.0, 0.0))* FQuat(hmdRotation.Rotator()))); // The camera rotates according to the headset
+			// CameraComp->SetRelativeRotation(GEngine->XRSystem->GetBaseRotation() + FRotator(PitchAdjustment, 0.0, 0.0)); // The camera rotates according to the headset
 
 		}
 		else
 		{
 			// UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(hmdRotation.Rotator());
 			// SetActorRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
-			CameraComp->SetRelativeRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
+			CameraComp->SetRelativeRotation(FRotator(FQuat(FRotator(PitchAdjustment, 0.0, 0.0))* FQuat(hmdRotation.Rotator())));
+			// CameraComp->SetRelativeRotation(GEngine->XRSystem->GetBaseRotation() + FRotator(PitchAdjustment, 0.0, 0.0));
 
 
 		}
@@ -581,6 +611,15 @@ void AVrCharacter::Tick(float DeltaTime)
 		StartMovement();
 	}
 	*/
+
+
+	// Code to test the rotation direction
+	FQuat TestRotator = FQuat(0.34248457, 0.10724915, 0.61845901, 0.69907825);
+	FRotator RotatorEquiv = TestRotator.Rotator();
+	RotatorEquiv = FRotator(RotatorEquiv.Pitch, RotatorEquiv.Yaw, RotatorEquiv.Roll);
+	UE_LOG(LogTemp, Warning, TEXT("[ROTATION TESTING] YAW %lf PITCH %lf ROLL %lf"), RotatorEquiv.Yaw, RotatorEquiv.Pitch, RotatorEquiv.Roll);
+
+
 }
 
 // Called to bind functionality to input
@@ -745,6 +784,9 @@ void AVrCharacter::Bird(const FInputActionValue& Value)
 			SelectView(ROADVIEW);
 		}
 
+		// Refresh the position whenever the viewpoint changes
+		ImmediateReload = true;
+
 	}
 
 }
@@ -850,6 +892,9 @@ void AVrCharacter::OrthogonalRight(const FInputActionValue& Value)
 	{
 		OrthogonalX += 100.0;
 	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
 	
 }
 
@@ -860,6 +905,9 @@ void AVrCharacter::OrthogonalLeft(const FInputActionValue& Value)
 	{
 		OrthogonalX -= 100.0;
 	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
 }
 
 void AVrCharacter::OrthogonalUp(const FInputActionValue& Value)
@@ -869,6 +917,9 @@ void AVrCharacter::OrthogonalUp(const FInputActionValue& Value)
 	{
 		OrthogonalY += 100.0;
 	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
 	
 }
 
@@ -879,6 +930,9 @@ void AVrCharacter::OrthogonalDown(const FInputActionValue& Value)
 	{
 		OrthogonalY -= 100.0;
 	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
 }
 
 void AVrCharacter::SetTime(double Time)

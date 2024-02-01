@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.0",
+	"EngineAssociation": "5.3",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -36,8 +36,7 @@
 			"SupportedTargetPlatforms": [
 				"Win64",
 				"Linux",
-				"Android",
-				"HoloLens"
+				"Android"
 			]
 		},
 		{
@@ -50,7 +49,6 @@
 			"SupportedTargetPlatforms": [
 				"Win64",
 				"Linux",
-				"HoloLens",
 				"Android"
 			]
 		},
@@ -59,12 +57,11 @@
 			"Enabled": true,
 			"SupportedTargetPlatforms": [
 				"Win64",
-				"HoloLens",
 				"Android"
 			]
 		},
 		{
-			"Name": "SteamVR",
+			"Name": "LiveLinkXR",
 			"Enabled": true,
 			"SupportedTargetPlatforms": [
 				"Win64",
@@ -72,7 +69,24 @@
 			]
 		},
 		{
-			"Name": "LiveLinkXR",
+			"Name": "SteamVR",
+			"Enabled": false,
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Linux"
+			]
+		},
+		{
+			"Name": "OpenXREyeTracker",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Linux",
+				"Android"
+			]
+		},
+		{
+			"Name": "XRVisualization",
 			"Enabled": true
 		}
 	]
