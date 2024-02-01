@@ -219,6 +219,10 @@ public:
 	// This is for tracing the odometry for debugging purpose, expose to blueprints
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Debugging)
 	FVector CurrentOdometryLocation;
+	
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
+	double Exposure;
+
 
 private:
 

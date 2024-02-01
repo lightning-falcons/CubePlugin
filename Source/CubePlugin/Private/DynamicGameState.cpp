@@ -31,7 +31,12 @@ ADynamicGameState::ADynamicGameState()
 
 	PhotoImport = toml::find<bool>(params, "photo_import");
 
+	PitchCorrection = toml::find<double>(loading, "pitch_correction");
+	YawCorrection = toml::find<double>(loading, "yaw_correction");
 	RollCorrection = toml::find<double>(loading, "roll_correction");
+
+	
+
 
 	// Set the bird's eye view height
 	HeightBirds = toml::find<double>(params, "height_birds");
@@ -190,7 +195,7 @@ void ADynamicGameState::BeginPlay()
 	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 	
 	// Correction to ensure odometry-global map alignment
-	GlobalMapActor->SetActorRotation(FRotator(0, 0, RollCorrection));
+	GlobalMapActor->SetActorRotation(FRotator(PitchCorrection, YawCorrection, RollCorrection));
 	
 }
 
@@ -251,6 +256,9 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
 	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
+
+	double Exposure = toml::find<double>(params, "exposure");
+	ControlledCharacter->Exposure = Exposure;
 
 	// Set the PlayBack speed depending on whether the VR Character is stopped or moving
 	if (ControlledCharacter->Motion == STOPPED)

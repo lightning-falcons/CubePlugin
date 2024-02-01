@@ -21,6 +21,12 @@ local_name = "Local Point Clouds"
 # The name of the folder containing the images
 image_name = "Images"
 
+# Correction angle for the global map PITCH in degrees
+pitch_correction = 0.00
+
+# Correction angle for the global map YAW in degrees
+yaw_correction = 0.00
+
 # Correction angle for the global map ROLL in degrees
 roll_correction = -0.29
 
@@ -35,20 +41,25 @@ number_frames = 1000
 height_birds = 10000.0
 
 # Import at a rate of 1 per import_every frames
-import_every = 30
+import_every = 1
 
 # Playback at this times the realtime speed
 playback_speed = 0.5
 
 # Display points at these sizes when in road or bird's eye view
 local_ground_size = 0.5
+# local_ground_size = 1.0
 local_bird_size = 0.5
 global_ground_size = 0.05
 global_bird_size = 0.1
 
 # Whether photos are imported for the video playback
 # This must be set to false if there are no images available
-photo_import = false
+photo_import = true
+
+# Set the camera exposure (lower value means brighter)
+exposure = 0.1
+# exposure = 0.6
 
 
 

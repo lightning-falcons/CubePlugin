@@ -173,5 +173,9 @@ public:
 
 	void HidePoint(FLidarPointCloudPoint* Point);
 
+	double PitchCorrection;
+	double YawCorrection;
 	double RollCorrection; // Global point cloud roll correction angle
+
+	
 };
