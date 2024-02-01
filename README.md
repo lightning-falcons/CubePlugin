@@ -73,7 +73,7 @@ LiBACK incorporates a large number of convenient keyboard shortcuts during runti
 | Key | Description |
 | --- | --- |
 | &#8593; | Toggle between road (vehicle) perspective and the bird's eye perspective. The video is automatically set to disabled when the bird's eye persepctive is enabled. |
-| &#8595; | Toggle the movement of the camera (paused or fixed with data collection device). The position becomes fixed but the orientation still changes. Do not toggle between road and bird's eye perspectives when the position is fixed as it will lead to undesired results. |
+| &#8595; | Toggle between playback and paused. When paused, everything is paused - that means, the video, local point cloud evolution and character evolution are all paused. Do not toggle between road and bird's eye perspectives when the paused as it will lead to undesired results. |
 | &#8592; | Wind back time by one second (real-life time, regardless of the playback speed). If the beginning of the data is reached, the starting scene will be displayed until the display time of subsequent data is reached. |
 | &#8594; | Wind forward time by one second (real-life time, regardless of the playback speed). If the end of the data is reached, the playback will re-start from the beginning. |
 | V | Toggle the visibility of the video. |
@@ -81,6 +81,8 @@ LiBACK incorporates a large number of convenient keyboard shortcuts during runti
 | S | Move the camera down by one metre. |
 | A | Move the camera left by one metre. |
 | D | Move the camera right by one metre. |
+
+You may wish to note additionally that all objects within a fixed radius of the camera are hidden to prevent obstruction of the camera.
 
 ### Installation Instructions (Windows 11)
 1. Go to [Download Unreal Engine](https://www.unrealengine.com/en-US/download) and following instructions to install UE 5.0.3
@@ -127,3 +129,4 @@ The start of an example file is shown below.
 0,1.68845145698648e+18,-0.188877046108,-0.19570992887,-1.94109928608,-3.5614618739227173,2.3413644750869143,0.25288259174816863
 ```
 ## Acknowledgments
+This project could not be possible without the support of the ITS group including Dr Stewart Worrall, Dr Stephany Berrio Perez and Dr Mao Shan, who provided invaluable advice and support. The project is also partly funded by the Vacation Research Internship project at the University of Sydney and Transport for NSW. 
