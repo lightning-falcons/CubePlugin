@@ -177,5 +177,11 @@ public:
 	double YawCorrection;
 	double RollCorrection; // Global point cloud roll correction angle
 
+	bool LoadGlobal;
+	bool LoadOne;
+
+	ULidarPointCloud* SingleCloud;
+	int SingleCloudLoaded = 2;
+
 	
 };

@@ -21,6 +21,9 @@ local_name = "Local Point Clouds"
 # The name of the folder containing the images
 image_name = "Images"
 
+# If load_one is set to true, this is the single point cloud that is loaded
+single_name = "Local Point Clouds\\1688451456.986476606.las"
+
 # Correction angle for the global map PITCH in degrees
 pitch_correction = 0.00
 
@@ -33,7 +36,7 @@ roll_correction = -0.29
 [VR_Parameters]
 
 # The number of TOTAL imported frames
-number_frames = 1000
+number_frames = 30
 
 # The height that the bird's eye view is set to this
 # The units must be in CENTIMETRES
@@ -44,7 +47,7 @@ height_birds = 10000.0
 import_every = 1
 
 # Playback at this times the realtime speed
-playback_speed = 0.5
+playback_speed = 0.05
 
 # Display points at these sizes when in road or bird's eye view
 local_ground_size = 0.5
@@ -55,11 +58,16 @@ global_bird_size = 0.1
 
 # Whether photos are imported for the video playback
 # This must be set to false if there are no images available
-photo_import = true
+photo_import = false
 
 # Set the camera exposure (lower value means brighter)
 exposure = 0.1
 # exposure = 0.6
 
+# Whether we wish to load a global map
+load_global = false
 
+# Mode for whether we want to load just a single point cloud
+# If true, load_global and photo_import must both be set to false
+load_one = true
 

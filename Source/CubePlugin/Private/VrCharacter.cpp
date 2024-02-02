@@ -145,78 +145,84 @@ void AVrCharacter::BeginPlay()
 	//source.open("C:\\Users\\admin\\Desktop\\Input Data\\odom.txt");  // open data
 	// source.open("C:\\Users\\its\\Documents\\Unreal Projects\\
 	// \\Data\\Odometry.csv");
-	source.open(GetWorld()->GetGameState<ADynamicGameState>()->FullOdometryPath);
+	LoadOne = GetWorld()->GetGameState<ADynamicGameState>()->LoadOne;
 
-	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
+	if (!LoadOne)
+	{
+		source.open(GetWorld()->GetGameState<ADynamicGameState>()->FullOdometryPath);
 
-	int col;
-	double time, x, y, z, a, b, c;
+		UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
 
-	std::stringstream ss;
-	ss << source.rdbuf();
+		int col;
+		double time, x, y, z, a, b, c;
 
-	// This assumes a particular csv file format
-	while (csv_istream(ss)
-		>> col >> time >> x >> y >> z >> a >> b >> c) {
-		//...do something with the record...
+		std::stringstream ss;
+		ss << source.rdbuf();
 
-		TArray<double> TempOdometry;
-		TempOdometry.Add(x * 100);
-		TempOdometry.Add(y * 100);
-		TempOdometry.Add(z * 100);
-		TempOdometry.Add(a);
-		TempOdometry.Add(b);
-		TempOdometry.Add(c);
-		//TempOdometry.Add(d);
-		TempOdometry.Add(time / 1000000000);
+		// This assumes a particular csv file format
+		while (csv_istream(ss)
+			>> col >> time >> x >> y >> z >> a >> b >> c) {
+			//...do something with the record...
 
-		// UE_LOG(LogTemp, Warning, TEXT("[IMPORTING] YAW %lf PITCH %lf ROLL %lf"), a, b, c);
+			TArray<double> TempOdometry;
+			TempOdometry.Add(x * 100);
+			TempOdometry.Add(y * 100);
+			TempOdometry.Add(z * 100);
+			TempOdometry.Add(a);
+			TempOdometry.Add(b);
+			TempOdometry.Add(c);
+			//TempOdometry.Add(d);
+			TempOdometry.Add(time / 1000000000);
 
-		Odometry.Add(TempOdometry);
-		TimeStampOdometry.Add(time / 1000000000);
+			// UE_LOG(LogTemp, Warning, TEXT("[IMPORTING] YAW %lf PITCH %lf ROLL %lf"), a, b, c);
 
-		UE_LOG(LogTemp, Warning, TEXT(" %lf "), time);
+			Odometry.Add(TempOdometry);
+			TimeStampOdometry.Add(time / 1000000000);
+
+			UE_LOG(LogTemp, Warning, TEXT(" %lf "), time);
+		}
+
+		// This is for the import of the quarternion, but is done incorrectly
+		/*
+
+		for (std::string line; std::getline(source, line, ','); )   //read stream line by line
+		{
+			//std::istringstream in(line);      //make a stream for the line itself
+			std::stringstream ss(line);
+
+			float time, x, y, z, a, b, c, d;
+			ss >> time >> x >> y >> z >> a >> b >> c >> d;
+
+			float readings[] = { time, x, y, z, a, b, c, d };
+
+			TArray<float> TempOdometry;
+			TempOdometry.Add(x);
+			TempOdometry.Add(y);
+			TempOdometry.Add(z);
+			TempOdometry.Add(a);
+			TempOdometry.Add(b);
+			TempOdometry.Add(c);
+			TempOdometry.Add(d);
+			TempOdometry.Add(time / 1000);
+
+			Odometry.Add(TempOdometry);
+
+			UE_LOG(LogTemp, Warning, TEXT(" %f "), time);
+		}*/
+
+		UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
+
+		ScanIndex = -1;
+
+		// This is how much we downsample the odometry as used for the LIDAR scans
+		// i.e so that there is 1:1 correspondence between LIDAR scan and odometry reading
+		// We are setting the Odometry variable for the game state, not the character
+		int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
+		GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, GetWorld()->GetGameState<ADynamicGameState>()->NumberFrames);
+
+		//Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 	}
 
-	// This is for the import of the quarternion, but is done incorrectly
-	/*
-
-	for (std::string line; std::getline(source, line, ','); )   //read stream line by line
-	{
-		//std::istringstream in(line);      //make a stream for the line itself
-		std::stringstream ss(line);
-
-		float time, x, y, z, a, b, c, d;
-		ss >> time >> x >> y >> z >> a >> b >> c >> d;
-
-		float readings[] = { time, x, y, z, a, b, c, d };
-
-		TArray<float> TempOdometry;
-		TempOdometry.Add(x);
-		TempOdometry.Add(y);
-		TempOdometry.Add(z);
-		TempOdometry.Add(a);
-		TempOdometry.Add(b);
-		TempOdometry.Add(c);
-		TempOdometry.Add(d);
-		TempOdometry.Add(time / 1000);
-
-		Odometry.Add(TempOdometry);
-
-		UE_LOG(LogTemp, Warning, TEXT(" %f "), time);
-	}*/
-
-	UE_LOG(LogTemp, Warning, TEXT(" %f "), 12345678.f);
-
-	ScanIndex = -1;
-
-	// This is how much we downsample the odometry as used for the LIDAR scans
-	// i.e so that there is 1:1 correspondence between LIDAR scan and odometry reading
-	// We are setting the Odometry variable for the game state, not the character
-	int DownSamplePer = GetWorld()->GetGameState<ADynamicGameState>()->DownSamplePer;
-	GetWorld()->GetGameState<ADynamicGameState>()->Odometry = ADynamicGameState::ExtractEvery(Odometry, DownSamplePer, GetWorld()->GetGameState<ADynamicGameState>()->NumberFrames);
-
-	//Odometry = ADynamicGameState::ExtractEvery(Odometry, 3, 299);
 
 	if (!UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
@@ -323,12 +329,12 @@ void AVrCharacter::BeginPlay()
 void AVrCharacter::Tick(float DeltaTime)
 {
 
-	
+
 	// Check whether any valid UVideoWidget subclass object has been found, and if
 	// it is the first time that has happened, set the widget class
 	if (ItemReferences2.Num() > 0 && !VideoWidgetSet && ItemReferences2[0] != nullptr && GetWorld()->GetGameState<ADynamicGameState>()->PhotoImport)
 	{
-		
+
 		// Connect the widget component to the character
 		// VideoWidgetComponent->SetupAttachment(SpringArmComp);
 
@@ -343,10 +349,10 @@ void AVrCharacter::Tick(float DeltaTime)
 		VideoWidgetComponent->SetPivot(FVector2D(0.5f, 0.5f));
 		VideoWidgetComponent->SetVisibility(true);
 
-		
+
 		VideoWidgetComponent->RegisterComponent();
 
-		
+
 
 		VideoWidgetComponent->SetWidgetClass(ItemReferences2[0]->GetClass());
 		VideoWidgetSet = true;
@@ -360,11 +366,11 @@ void AVrCharacter::Tick(float DeltaTime)
 	VideoWidgetComponent->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 	VideoWidgetComponent->SetRelativeLocation(FVector(1000.f, -800.f, 190.f));
 	*/
-	
+
 
 	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), ItemReferences2, UVideoWidget::StaticClass(), false);
 
-	
+
 
 	UE_LOG(LogTemp, Warning, TEXT("There are %i subclasses of the UVideoWidget. [NewMethod]"), ItemReferences2.Num());
 
@@ -425,119 +431,132 @@ void AVrCharacter::Tick(float DeltaTime)
 	//UE_LOG(LogTemp, Warning, TEXT("Time to exceed before actor is moved: %lf"), TimeStampOdometry[ScanIndex]);
 	//UE_LOG(LogTemp, Warning, TEXT("Should we move to next frame? %lf %lf %i"), ClockTime, TimeStampOdometry[ScanIndex], ClockTime > TimeStampOdometry[ScanIndex]);
 
+	// Default values, change if applicable (i.e we are actually loading)
+	CurrentOdometryLocation = FVector(0, 0, 0);
+	FRotator rot = FRotator(0, 0, 0);
+
 
 	// This is a temporary feature where we move a frame every 0.1 s.
-	if ((ClockTime > TimeStampOdometry[ScanIndex + 1] && ScanIndex < 29900) || ImmediateReload)
+	if (!LoadOne)
 	{
-
-		UE_LOG(LogTemp, Warning, TEXT("MOVING TO NEXT FRAME..."));
-
-		// Iterate to the next frame only if not immediate reload
-		if (!ImmediateReload)
+		if ((ClockTime > TimeStampOdometry[ScanIndex + 1] && ScanIndex < 29900) || ImmediateReload)
 		{
-			ScanIndex += 1;
+
+			UE_LOG(LogTemp, Warning, TEXT("MOVING TO NEXT FRAME..."));
+
+			// Iterate to the next frame only if not immediate reload
+			if (!ImmediateReload)
+			{
+				ScanIndex += 1;
+			}
+			else
+			{
+				ImmediateReload = false;
+			}
+
+			// Set the current odometry in the game state
+			// GetWorld()->GetGameState<ADynamicGameState>()->CurrentOdometry = Odometry[ScanIndex];
+
+
+
+
+			// The clocktime is re-set
+			// ClockTime = 0;
+
+			/*
+
+			UE_LOG(LogTemp, Warning, TEXT("We are accessing reading number %i"), ScanIndex);
+
+			UE_LOG(LogTemp, Warning, TEXT("Q1 %lf"), Odometry[ScanIndex][3]);
+			UE_LOG(LogTemp, Warning, TEXT("Q2 %lf"), Odometry[ScanIndex][4]);
+			UE_LOG(LogTemp, Warning, TEXT("Q3 %lf"), Odometry[ScanIndex][5]);
+			UE_LOG(LogTemp, Warning, TEXT("Q4 %lf"), Odometry[ScanIndex][6]);
+
+			*/
+
+
+			UE_LOG(LogTemp, Warning, TEXT("The index of this scan: %i"), ScanIndex);
+
+			// Get the rotator, which describes the orientation of the character should face
+			//FRotator rot = FRotator(Odometry[ScanIndex][4], -Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
+			rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
+
+
+
+
+			UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
+
+			// The local scan is loaded with the same position and orientation as the character
+			//GetWorld()->GetGameState<ADynamicGameState>()->LoadNext(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
+
+
+
+			UE_LOG(LogTemp, Warning, TEXT("%lf %lf %lf"), rot.Yaw, rot.Pitch, rot.Roll);
+
+
+			//SetActorLocationAndRotation(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), rot);
+
+			// If the VR is off, then we need to set the orientation of the character
+			if (!VROn)
+			{
+				// We set it both directly and using the player controller
+				// Need to do this to ensure all roll, pitch and yaw values are indeed set
+				SetActorRotation(rot.GetInverse());
+				UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(rot.GetInverse());
+
+			}
+
+			// ScanIndex += 1;
+
 		}
 		else
 		{
-			ImmediateReload = false;
+			// Perform interpolation of position in between time points
+			double TimeEarly = TimeStampOdometry[ScanIndex];
+			double TimeLate = TimeStampOdometry[ScanIndex + 1];
+			double ProportionThrough;
+
+			// Check whether we are before the start
+			if (ClockTime > TimeEarly)
+			{
+				ProportionThrough = (ClockTime - TimeEarly) / (TimeLate - TimeEarly);
+			}
+			else
+			{
+				ProportionThrough = 0;
+			}
+
+			FVector LocationEarly = FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment);
+			FVector LocationLate = FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2] + 190.0 + ZAdjustment);
+
+
+			// The Character should be set at the location PLUS 190 cm so they appear above the ground
+			// if (Motion == MOVING)
+			{
+				// Only update the character location if they are supposed to be moving
+				SetActorLocation(LocationEarly + ProportionThrough * (LocationLate - LocationEarly));
+				AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
+
+			}
 		}
-
-		// Set the current odometry in the game state
-		// GetWorld()->GetGameState<ADynamicGameState>()->CurrentOdometry = Odometry[ScanIndex];
-		
-
-
-		
-		// The clocktime is re-set
-		// ClockTime = 0;
-
 		/*
-
-		UE_LOG(LogTemp, Warning, TEXT("We are accessing reading number %i"), ScanIndex);
-
-		UE_LOG(LogTemp, Warning, TEXT("Q1 %lf"), Odometry[ScanIndex][3]);
-		UE_LOG(LogTemp, Warning, TEXT("Q2 %lf"), Odometry[ScanIndex][4]);
-		UE_LOG(LogTemp, Warning, TEXT("Q3 %lf"), Odometry[ScanIndex][5]);
-		UE_LOG(LogTemp, Warning, TEXT("Q4 %lf"), Odometry[ScanIndex][6]);
-
+		if (ScanIndex == 299)
+		{
+			ScanIndex = 0;
+		}
 		*/
 
+		CurrentOdometryLocation = FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]);
 
-		UE_LOG(LogTemp, Warning, TEXT("The index of this scan: %i"), ScanIndex);
-
-		// Get the rotator, which describes the orientation of the character should face
-		//FRotator rot = FRotator(Odometry[ScanIndex][4], -Odometry[ScanIndex][5], Odometry[ScanIndex][3]);
-		FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
-
-
-		
-
-		UE_LOG(LogTemp, Warning, TEXT("Setting the actor y location at: %lf"), Odometry[ScanIndex][1]);
-
-		// The local scan is loaded with the same position and orientation as the character
-		//GetWorld()->GetGameState<ADynamicGameState>()->LoadNext(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), ScanIndex, rot);
-
-
-
-		UE_LOG(LogTemp, Warning, TEXT("%lf %lf %lf"), rot.Yaw, rot.Pitch, rot.Roll);
-
-		
-		//SetActorLocationAndRotation(FVector(Odometry[ScanIndex][0], Odometry[ScanIndex][1], Odometry[ScanIndex][2]), rot);
-		
-		// If the VR is off, then we need to set the orientation of the character
-		if (!VROn)
-		{
-			// We set it both directly and using the player controller
-			// Need to do this to ensure all roll, pitch and yaw values are indeed set
-			SetActorRotation(rot.GetInverse());
-			UGameplayStatics::GetPlayerController(this->GetWorld(), 0)->SetControlRotation(rot.GetInverse());
-
-		}
-
-		// ScanIndex += 1;
-
+		// Headset
+		rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
 	}
 	else
 	{
-		// Perform interpolation of position in between time points
-		double TimeEarly = TimeStampOdometry[ScanIndex];
-		double TimeLate = TimeStampOdometry[ScanIndex + 1];
-		double ProportionThrough;
-
-		// Check whether we are before the start
-		if (ClockTime > TimeEarly)
-		{
-			ProportionThrough = (ClockTime - TimeEarly) / (TimeLate - TimeEarly);
-		}
-		else
-		{
-			ProportionThrough = 0;
-		}
-
-		FVector LocationEarly = FVector(Odometry[ScanIndex][0], -Odometry[ScanIndex][1], Odometry[ScanIndex][2] + 190.0 + ZAdjustment);
-		FVector LocationLate = FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2] + 190.0 + ZAdjustment);
-
-
-		// The Character should be set at the location PLUS 190 cm so they appear above the ground
-		// if (Motion == MOVING)
-		{
-			// Only update the character location if they are supposed to be moving
-			SetActorLocation(LocationEarly + ProportionThrough * (LocationLate - LocationEarly));
-			AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
-
-		}
+		SetActorLocation(FVector(0, 0, 190.0 + ZAdjustment));
+		AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
 	}
-	/*
-	if (ScanIndex == 299)
-	{
-		ScanIndex = 0;
-	}
-	*/
-
-	CurrentOdometryLocation = FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]);
-
-	// Headset
-	FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
+	
 
 	// If the VR mode is on, the orientation should always be in the direction of the HMD
 	if (VROn && ScanIndex != -1)
@@ -566,7 +585,7 @@ void AVrCharacter::Tick(float DeltaTime)
 		// IXRTrackingSystem Track = IXRTrackingSystem::HMDDeviceId;
 
 
-		PitchAdjustmentRotator = FRotator(FQuat(rot) * FQuat(FRotator(PitchAdjustment, 0.0, 0.0)));
+		PitchAdjustmentRotator = FRotator(FQuat(rot) * FQuat(FRotator(0.0, AddedRotationAngle, 0.0)) * FQuat(FRotator(PitchAdjustment, 0.0, 0.0)));
 
 		// Set the orientation of the character
 		// SetActorRotation(hmdRotation);
@@ -579,6 +598,7 @@ void AVrCharacter::Tick(float DeltaTime)
 			// Product of quaternion ensures correct composition of rotations
 			CameraComp->SetRelativeRotation(FRotator(FQuat(FRotator(PitchAdjustment, 0.0, 0.0))* FQuat(hmdRotation.Rotator()))); // The camera rotates according to the headset
 			// CameraComp->SetRelativeRotation(GEngine->XRSystem->GetBaseRotation() + FRotator(PitchAdjustment, 0.0, 0.0)); // The camera rotates according to the headset
+			CameraComp->AddRelativeRotation(FRotator(0.0, AddedRotationAngle, 0.0));
 
 		}
 		else
@@ -587,6 +607,8 @@ void AVrCharacter::Tick(float DeltaTime)
 			// SetActorRotation(hmdRotation.Rotator() + FRotator(PitchAdjustment, 0.0, 0.0));
 			CameraComp->SetRelativeRotation(FRotator(FQuat(FRotator(PitchAdjustment, 0.0, 0.0))* FQuat(hmdRotation.Rotator())));
 			// CameraComp->SetRelativeRotation(GEngine->XRSystem->GetBaseRotation() + FRotator(PitchAdjustment, 0.0, 0.0));
+			CameraComp->AddRelativeRotation(FRotator(0.0, AddedRotationAngle, 0.0));
+
 
 
 		}
@@ -718,6 +740,24 @@ void AVrCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
 
 			PlayerEnhancedInputComponent->BindAction(OrthogonalDownAction, ETriggerEvent::Started, this, &AVrCharacter::OrthogonalDown);
+
+		}
+
+		if (CounterClockwiseRotationAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(CounterClockwiseRotationAction, ETriggerEvent::Started, this, &AVrCharacter::CounterClockwiseRotation);
+
+		}
+
+		if (ClockwiseRotationAction)
+		{
+
+			UE_LOG(LogTemp, Warning, TEXT("BTA Bound"));
+
+			PlayerEnhancedInputComponent->BindAction(ClockwiseRotationAction, ETriggerEvent::Started, this, &AVrCharacter::ClockwiseRotation);
 
 		}
 
@@ -929,6 +969,30 @@ void AVrCharacter::OrthogonalDown(const FInputActionValue& Value)
 	if (CurrentValue)
 	{
 		OrthogonalY -= 100.0;
+	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
+}
+
+void AVrCharacter::CounterClockwiseRotation(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		AddedRotationAngle -= 10.0;
+	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
+}
+
+void AVrCharacter::ClockwiseRotation(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		AddedRotationAngle += 10.0;
 	}
 
 	// Refresh the position whenever the location changes

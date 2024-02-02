@@ -131,6 +131,8 @@ public:
 	double ZAdjustment = 0;
 	double PitchAdjustment = 0;
 
+	double AddedRotationAngle = 0.0;
+
 	ViewType CurrentView = ROADVIEW;
 
 	// Store whether the character should be moving
@@ -173,6 +175,12 @@ protected:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* OrthogonalDownAction;
 
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* CounterClockwiseRotationAction;
+
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
+	UInputAction* ClockwiseRotationAction;
+
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void Bird(const FInputActionValue& Value);
 
@@ -202,6 +210,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void OrthogonalDown(const FInputActionValue& Value);
 
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void CounterClockwiseRotation(const FInputActionValue& Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ClockwiseRotation(const FInputActionValue& Value);
+
 
 public:
 	
@@ -223,6 +237,8 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
 	double Exposure;
 
+	bool LoadOne;
+
 
 private:
 
@@ -233,6 +249,7 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	double OrthogonalY = 0.0;
+
 
 
 

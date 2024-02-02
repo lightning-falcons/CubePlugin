@@ -31,6 +31,11 @@ ADynamicGameState::ADynamicGameState()
 
 	PhotoImport = toml::find<bool>(params, "photo_import");
 
+	LoadGlobal = toml::find<bool>(params, "load_global");
+	LoadOne = toml::find<bool>(params, "load_one");
+
+
+
 	PitchCorrection = toml::find<double>(loading, "pitch_correction");
 	YawCorrection = toml::find<double>(loading, "yaw_correction");
 	RollCorrection = toml::find<double>(loading, "roll_correction");
@@ -68,7 +73,7 @@ ADynamicGameState::ADynamicGameState()
 void ADynamicGameState::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	UE_LOG(LogTemp, Warning, TEXT("[TOML] The odometry source is : %s "), *FString(FullOdometryPath.c_str()));
 
 	/*
@@ -99,28 +104,32 @@ void ADynamicGameState::BeginPlay()
 	ScanIndex = -1;
 
 	// ULevel* Level = GEditor->GetEditorWorldContext().World()->GetCurrentLevel();
-	
 	std::string DataPath = toml::find<std::string>(loading, "data_path");
-	std::string GlobalPath = toml::find<std::string>(loading, "global_name");
-	std::filesystem::path FullGlobalPath = DataPath;
-	FullGlobalPath /= GlobalPath;
-	const FString PathToFile = FString(FullGlobalPath.c_str());
+
+	// Create an actor for the global and local maps
+	GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
+	DynamicActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
+	DynamicActorInterlaced = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
+
+	if (LoadGlobal)
+	{
+		std::string GlobalPath = toml::find<std::string>(loading, "global_name");
+		std::filesystem::path FullGlobalPath = DataPath;
+		FullGlobalPath /= GlobalPath;
+		const FString PathToFile = FString(FullGlobalPath.c_str());
+	
+
 	//const FString PathToFile = FString("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Global Point Cloud.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\colour.las");
 	//const FString PathToFile = FString("C:\\Users\\admin\\cudal_short_parsed.las");
 
+		// Create the Global Map Point Cloud from the file
+		GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
 
-	// Create an actor for the global and local maps
-	GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor( ALidarPointCloudActor::StaticClass() ));
-	DynamicActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
-	DynamicActorInterlaced = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
-
-	// Create the Global Map Point Cloud from the file
-	GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
-
-	// Specify that the global point cloud should be displayed with colour source from data and with the particular point size
-	GlobalMapActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
-	GlobalMapActor->GetPointCloudComponent()->PointSize = 0.05;
+		// Specify that the global point cloud should be displayed with colour source from data and with the particular point size
+		GlobalMapActor->GetPointCloudComponent()->ColorSource = ELidarPointCloudColorationMode::Data;
+		GlobalMapActor->GetPointCloudComponent()->PointSize = 0.05;
+	}
 
 	DynamicActor->GetPointCloudComponent()->PointSize = 1;
 	DynamicActorInterlaced->GetPointCloudComponent()->PointSize = 1;
@@ -129,35 +138,50 @@ void ADynamicGameState::BeginPlay()
 
 	// Now we need to import the local maps
 	//FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
-
-
-	std::string LocalPath = toml::find<std::string>(loading, "local_name");
-	std::filesystem::path FullLocalPath = DataPath;
-	FullLocalPath /= LocalPath;
-	
-	FString directoryToSearch = FString(FullLocalPath.c_str());
-	//FString directoryToSearch = TEXT("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Local Point Clouds");
-	FString filesStartingWith = TEXT("");
-	FString fileExtensions = TEXT("las");
-
-	// Get all the las files
-	filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
-
-
-	// Select every nth file, limit to m files
-	filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, NumberFrames);
-
-	// Load each point cloud and also get the time stamp
-	for (auto it : filesInDirectory)
+	UE_LOG(LogTemp, Warning, TEXT("THE VALUE OF LoadOne IS %d"), LoadOne);
+	if (!LoadOne)
 	{
-		LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(it));
-		double OccurrenceTime = FCString::Atod(*FPaths::GetBaseFilename(it));
-		TimeStamp.Add(OccurrenceTime);
-		//UE_LOG(LogTemp, Warning, TEXT("Time: %lf"), OccurrenceTime);
+
+		std::string LocalPath = toml::find<std::string>(loading, "local_name");
+		std::filesystem::path FullLocalPath = DataPath;
+		FullLocalPath /= LocalPath;
+
+		FString directoryToSearch = FString(FullLocalPath.c_str());
+		//FString directoryToSearch = TEXT("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Local Point Clouds");
+		FString filesStartingWith = TEXT("");
+		FString fileExtensions = TEXT("las");
+
+		// Get all the las files
+		filesInDirectory = GetAllFilesInDirectory(directoryToSearch, true, filesStartingWith, fileExtensions);
+
+		// Select every nth file, limit to m files
+		filesInDirectory = ExtractEvery(filesInDirectory, DownSamplePer, NumberFrames);
+
+		// Load each point cloud and also get the time stamp
+		for (auto it : filesInDirectory)
+		{
+			LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(it));
+			double OccurrenceTime = FCString::Atod(*FPaths::GetBaseFilename(it));
+			TimeStamp.Add(OccurrenceTime);
+			//UE_LOG(LogTemp, Warning, TEXT("Time: %lf"), OccurrenceTime);
+		}
+
+		// Set the start time to the first time stamp
+		ClockTime = TimeStamp[0];
+	}
+	else
+	{
+		// We are loading only one point cloud
+		std::string SingleName = toml::find<std::string>(loading, "single_name");
+		std::filesystem::path FullSingleName = DataPath;
+		FullSingleName /= SingleName;
+
+		LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(FString(FullSingleName.c_str())));
+
+		TimeStamp.Add(0.0);
+		ClockTime = TimeStamp[0];
 	}
 
-	// Set the start time to the first time stamp
-	ClockTime = TimeStamp[0];
 
 	// Search for all landscape components
 	TArray<AActor*> FoundLandscapeStreamingProxy;
@@ -188,15 +212,19 @@ void ADynamicGameState::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
 	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
 
-	// Set the point clouds first
+	if (GlobalMap)
+	{
+		// Set the point clouds first
+		GlobalMapActor->SetPointCloud(GlobalMap);
+		SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
+		GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
+
+		// Correction to ensure odometry-global map alignment
+		GlobalMapActor->SetActorRotation(FRotator(PitchCorrection, YawCorrection, RollCorrection));
+	}
+
 	
-	GlobalMapActor->SetPointCloud(GlobalMap);
-	SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
-	GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
-	
-	// Correction to ensure odometry-global map alignment
-	GlobalMapActor->SetActorRotation(FRotator(PitchCorrection, YawCorrection, RollCorrection));
-	
+
 }
 
 /**
@@ -253,6 +281,12 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 
 	g_num_mutex.lock();
 
+	if (LoadOne && SingleCloudLoaded > 0)
+	{
+		LoadNext(FVector(0, 0, 0), 0, FRotator(0, 0, 0), DynamicActor);
+		SingleCloudLoaded -= 1;
+	}
+
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
 	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
@@ -304,85 +338,92 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 		GlobalMapActor->GetPointCloudComponent()->PointSize = GlobalGroundSize;
 	}
 
-	// Check if we are at the last frame included already
-	// If so, revert the simulation to the very start
-	
-	if (ScanIndex >= TimeStamp.Num() - 2)
+	if (!LoadOne)
 	{
-		/*
-		PlaybackSpeed = 0;
-		PlaybackSpeedConfigured = 0;
 
-		for (auto it : LoadedPointClouds)
+		// Check if we are at the last frame included already
+		// If so, revert the simulation to the very start
+		if (ScanIndex >= TimeStamp.Num() - 2)
 		{
-			it->ConditionalBeginDestroy();
-		}
-		//LoadedPointClouds.Empty();
-		GEngine->ForceGarbageCollection();
-		*/
+			/*
+			PlaybackSpeed = 0;
+			PlaybackSpeedConfigured = 0;
 
-		ResetSimulation();
+			for (auto it : LoadedPointClouds)
+			{
+				it->ConditionalBeginDestroy();
+			}
+			//LoadedPointClouds.Empty();
+			GEngine->ForceGarbageCollection();
+			*/
+
+			ResetSimulation();
+		}
 	}
 	
 
+	UE_LOG(LogTemp, Warning, TEXT("[356] THE VALUE OF LoadOne IS %d"), LoadOne);
+
 	// Check if the clock time is such that the next frame should be loaded
-	if ((ClockTime > TimeStamp[ScanIndex + 1]) || ImmediateReload || ImmediateReloadSecond)
+	if (!LoadOne)
 	{
-
-		if (!ImmediateReload)
+		if ((ClockTime > TimeStamp[ScanIndex + 1]) || ImmediateReload || ImmediateReloadSecond)
 		{
-			// Load the next frame
-			ScanIndex += 1;
-			ImmediateReloadSecond = false;
+			if (!ImmediateReload)
+			{
+				// Load the next frame
+				ScanIndex += 1;
+				ImmediateReloadSecond = false;
+			}
+			else
+			{
+				ImmediateReload = false;
+				ScanIndex -= 1;
+			}
+
+
+			// The Actor to be changed should be different depending on whether the scan is ODD or EVEN
+			if (ScanIndex % 2 == 0)
+			{
+				// Even Scan
+				// Change the normal actor
+
+				UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - EVEN"));
+
+				// Get the rotator, which describes the orientation of the character should face
+				// FRotator rot = FRotator(Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+				FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
+
+				UE_LOG(LogTemp, Warning, TEXT("[Point Cloud Rotator - RAW ODOM] YAW %lf PITCH %lf ROLL %lf"), Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][4], Odometry[ScanIndex + 1][5]);
+				UE_LOG(LogTemp, Warning, TEXT("[Point Cloud Rotator] YAW %lf PITCH %lf ROLL %lf"), rot.Yaw, rot.Pitch, rot.Roll);
+
+				// The local scan is loaded with the same position and orientation as the character
+				LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActor);
+
+			}
+			else
+			{
+				// Odd Scan
+				// Change the interlaced actor
+
+				UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - ODD"));
+
+				// Get the rotator, which describes the orientation of the character should face
+				// FRotator rot = FRotator(Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
+				FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
+
+				// The local scan is loaded with the same position and orientation as the character
+				LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActorInterlaced);
+			}
+
+
+
+
+
+			// Print the time discrepancy
+			// double DiscrepantTime = Odometry[ScanIndex][6] - TimeStamp[ScanIndex];
+			// UE_LOG(LogTemp, Warning, TEXT("DISCREPANT TIME %lf"), DiscrepantTime);
 		}
-		else
-		{
-			ImmediateReload = false;
-			ScanIndex -= 1;
-		}
-
-
-		// The Actor to be changed should be different depending on whether the scan is ODD or EVEN
-		if (ScanIndex % 2 == 0)
-		{
-			// Even Scan
-			// Change the normal actor
-
-			UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - EVEN"));
-
-			// Get the rotator, which describes the orientation of the character should face
-			// FRotator rot = FRotator(Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
-			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
-
-			UE_LOG(LogTemp, Warning, TEXT("[Point Cloud Rotator - RAW ODOM] YAW %lf PITCH %lf ROLL %lf"), Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][4], Odometry[ScanIndex + 1][5]);
-			UE_LOG(LogTemp, Warning, TEXT("[Point Cloud Rotator] YAW %lf PITCH %lf ROLL %lf"), rot.Yaw, rot.Pitch, rot.Roll);
-
-			// The local scan is loaded with the same position and orientation as the character
-			LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActor);
-
-		}
-		else
-		{
-			// Odd Scan
-			// Change the interlaced actor
-
-			UE_LOG(LogTemp, Warning, TEXT("NEXT FRAME LOADING GAME STATE (LIDAR) - ODD"));
-
-			// Get the rotator, which describes the orientation of the character should face
-			// FRotator rot = FRotator(Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][5], Odometry[ScanIndex + 1][3]);
-			FRotator rot = FRotator(-Odometry[ScanIndex + 1][4], -Odometry[ScanIndex + 1][3], Odometry[ScanIndex + 1][5]);
-
-			// The local scan is loaded with the same position and orientation as the character
-			LoadNext(FVector(Odometry[ScanIndex + 1][0], -Odometry[ScanIndex + 1][1], Odometry[ScanIndex + 1][2]), ScanIndex + 1, rot, DynamicActorInterlaced);
-		}
-
-
-
-
-
-		// Print the time discrepancy
-		// double DiscrepantTime = Odometry[ScanIndex][6] - TimeStamp[ScanIndex];
-		// UE_LOG(LogTemp, Warning, TEXT("DISCREPANT TIME %lf"), DiscrepantTime);
 
 	}
 
@@ -465,14 +506,10 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 	}
 		
 	
-
-	
 	// Set the location and rotation of the local point cloud
 	// The LIDAR point cloud is shifted 190 CM up from the character so it aligns with the global point cloud
 	PointCloudActor->SetActorLocationAndRotation(FVector(CharacterLocation), LocalRotation, false, 0, ETeleportType::None);
 	PointCloudActor->AddActorLocalOffset(FVector(0, 0, 190));
-
-
 
 }
 
