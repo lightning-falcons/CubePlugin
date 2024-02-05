@@ -65,9 +65,9 @@ exposure = 0.1
 # exposure = 0.6
 
 # Whether we wish to load a global map
-load_global = false
+load_global = true
 
 # Mode for whether we want to load just a single point cloud
 # If true, load_global and photo_import must both be set to false
-load_one = true
+load_one = false
 

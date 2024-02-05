@@ -137,6 +137,9 @@ void AVrCharacter::BeginPlay()
 	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("We are using FPSCharacter."));
 
+	// Determine the appropriate IMC mapping
+	LoadOne = GetWorld()->GetGameState<ADynamicGameState>()->LoadOne;
+
 	// We also need to read the file containing the odometry data, which needs to be provided in six DoF format
 	// x, y, z, a, b, c
 	// Needs to be the same coordination scheme as the original data
@@ -328,7 +331,8 @@ void AVrCharacter::BeginPlay()
 // Called every frame
 void AVrCharacter::Tick(float DeltaTime)
 {
-
+	// Determine the appropriate IMC mapping
+	LoadOne = GetWorld()->GetGameState<ADynamicGameState>()->LoadOne;
 
 	// Check whether any valid UVideoWidget subclass object has been found, and if
 	// it is the first time that has happened, set the widget class

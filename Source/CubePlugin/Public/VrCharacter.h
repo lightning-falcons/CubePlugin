@@ -237,6 +237,7 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
 	double Exposure;
 
+	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
 	bool LoadOne;
 
 
