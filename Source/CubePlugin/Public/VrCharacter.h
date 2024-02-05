@@ -128,14 +128,18 @@ public:
 	bool VideoWidgetSet = false;
 
 	// Adjustment for the bird's eye view
+	// These values, when changed, will be reflected upon point cloud reload
 	double ZAdjustment = 0;
 	double PitchAdjustment = 0;
 
+	// When a single point cloud is loaded, a user can change their yaw;
+	// the cumulated deviation from the default is stored by the AddedRotationAngle
 	double AddedRotationAngle = 0.0;
 
+	// The default (starting) type of view is the road view from the car
 	ViewType CurrentView = ROADVIEW;
 
-	// Store whether the character should be moving
+	// Store whether the character should be moving; default is moving
 	MovementType Motion = MOVING;
 
 protected:
@@ -151,6 +155,9 @@ protected:
 	// UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	// UInputAction* GroundAction;
 
+	// The below are INPUT ACTIONS, however, we don't rely on implementing these in
+	// code anymore, since we want to associate them with the VRPawn rather
+	// than the VRCharacter. For legacy reasons, the code bindings are still retained.
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* MovementAction;
 
@@ -180,6 +187,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	UInputAction* ClockwiseRotationAction;
+
+	// These are the actual FUNCTIONS associated with the inputs,
+	// and they are indeed used. However, VRPawn blueprints are used
+	// to call these functions.
 
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void Bird(const FInputActionValue& Value);
@@ -227,6 +238,8 @@ public:
 	// data points. Would usually be used when the time has been manually changed.
 	bool ImmediateReload = false;
 
+	// This is in fact the entire rotator describing the desired actor rotation but
+	// excluding the HMD orientation
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Input)
 	FRotator PitchAdjustmentRotator;
 
@@ -234,9 +247,11 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Debugging)
 	FVector CurrentOdometryLocation;
 	
+	// Exposure value used to set the scene brightness
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
 	double Exposure;
 
+	// Stored flag as to whether the mode was to only import one point cloud
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
 	bool LoadOne;
 

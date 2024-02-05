@@ -160,6 +160,8 @@ public:
 	bool PhotoImport; // Whether the video should be played
 	double HeightBirds; // How high up the bird's eye view should be
 
+	// These flags are set to true if we should immediately re-load the point clouds
+	// on next tick, for example, because we have moved back or forth in time
 	bool ImmediateReload = false;
 	bool ImmediateReloadSecond = false;
 
@@ -173,14 +175,24 @@ public:
 
 	void HidePoint(FLidarPointCloudPoint* Point);
 
+	// These are the correction angles for the global point cloud
 	double PitchCorrection;
 	double YawCorrection;
-	double RollCorrection; // Global point cloud roll correction angle
+	double RollCorrection;
 
+	// Flag set (read from config file) as for whether the global point
+	// cloud should be loaded 
 	bool LoadGlobal;
+
+	// Flag set (read from config file) as for whether we are to load just
+	// single point cloud or whether we are playing back the point clouds
 	bool LoadOne;
 
 	ULidarPointCloud* SingleCloud;
+
+	// This is a hack solution to get the single point cloud to load
+	// We essentially attempt loading multiple times and this integer limits
+	// the number of attempts so we do not waste too many resources
 	int SingleCloudLoaded = 2;
 
 	

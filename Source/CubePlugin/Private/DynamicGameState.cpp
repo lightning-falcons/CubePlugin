@@ -15,53 +15,59 @@ ADynamicGameState::ADynamicGameState()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	// Read the file
+	// Read the config file
 	data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\config.toml");
+	
+	// Separate the loading and VR parameters sections
 	loading = toml::find(data, "Loading");
 	params = toml::find(data, "VR_Parameters");
 
-	// Need in constructor, should be one the first things loaded
+	// Need in constructor, should be one of the first things loaded
+	// Extract from config the number of frames we need to load
 	NumberFrames = toml::find<int>(params, "number_frames");
 
-	// Set the playback speed ratio
+	// Extract from config the desired playback speed ratio
 	PlaybackSpeed = toml::find<double>(params, "playback_speed");
+
+	// Store a copy of the original (configured) playback speed, in case we make
+	// any changes to the actual playback speed
 	PlaybackSpeedConfigured = PlaybackSpeed;
 
+	// Extract from config the downsampling factor
 	DownSamplePer = toml::find<int>(params, "import_every");
 
+	// Extract from config whether we want to import photos
 	PhotoImport = toml::find<bool>(params, "photo_import");
 
+	// Extract from config whether we want to just load the global maps
 	LoadGlobal = toml::find<bool>(params, "load_global");
+
+	// Extract from config whether we want single point cloud loading mode enabled
 	LoadOne = toml::find<bool>(params, "load_one");
 
-
-
+	// Extract from config the manual global map angular correction values
 	PitchCorrection = toml::find<double>(loading, "pitch_correction");
 	YawCorrection = toml::find<double>(loading, "yaw_correction");
 	RollCorrection = toml::find<double>(loading, "roll_correction");
 
-	
-
-
-	// Set the bird's eye view height
+	// Extract from config the bird's eye view height
 	HeightBirds = toml::find<double>(params, "height_birds");
 	UE_LOG(LogTemp, Warning, TEXT("[TOML] The bird's eye view height is set as : %lf "), HeightBirds);
 
-
-	// Odometry Data Path
+	// Extract from config the Data Path
 	std::string DataPath = toml::find<std::string>(loading, "data_path");
-	std::string OdometryPath = toml::find<std::string>(loading, "odometry_name");
 
+	// Extract from config the OdometryPath and join with the DataPath
+	std::string OdometryPath = toml::find<std::string>(loading, "odometry_name");
 	FullOdometryPath = DataPath;
 	FullOdometryPath /= OdometryPath;
 
-	// Video Path
+	// Extract from config the ImagePath and join with the DataPath
 	std::string ImagePath = toml::find<std::string>(loading, "image_name");
-	
 	FullImagePath = DataPath;
 	FullImagePath /= ImagePath;
 
-	// Point cloud sizes
+	// Extract from config the point cloud sizes
 	LocalGroundSize = toml::find<double>(params, "local_ground_size");
 	LocalBirdSize = toml::find<double>(params, "local_bird_size");
 	GlobalGroundSize = toml::find<double>(params, "global_ground_size");
@@ -107,21 +113,23 @@ void ADynamicGameState::BeginPlay()
 	std::string DataPath = toml::find<std::string>(loading, "data_path");
 
 	// Create an actor for the global and local maps
+	// We do this irrespective of what maps we are actually loading:
+	// if we are not loading a point cloud, we simply don't set a point cloud
+	// to the actor. There are two dynamic actors since we will often want to display
+	// two point clouds at once to avoid the "flickering" issue
 	GlobalMapActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 	DynamicActor = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 	DynamicActorInterlaced = Cast<ALidarPointCloudActor>(GetWorld()->SpawnActor(ALidarPointCloudActor::StaticClass()));
 
+	// If we are loading the global map, then we'll need to parse it and set appropriate actor parameters
 	if (LoadGlobal)
 	{
+
+		// Extract from config the path of the global map, join with the local path and then convert to FString
 		std::string GlobalPath = toml::find<std::string>(loading, "global_name");
 		std::filesystem::path FullGlobalPath = DataPath;
 		FullGlobalPath /= GlobalPath;
 		const FString PathToFile = FString(FullGlobalPath.c_str());
-	
-
-	//const FString PathToFile = FString("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Global Point Cloud.las");
-	//const FString PathToFile = FString("C:\\Users\\admin\\Downloads\\colour.las");
-	//const FString PathToFile = FString("C:\\Users\\admin\\cudal_short_parsed.las");
 
 		// Create the Global Map Point Cloud from the file
 		GlobalMap = ULidarPointCloud::CreateFromFile(PathToFile);
@@ -131,23 +139,24 @@ void ADynamicGameState::BeginPlay()
 		GlobalMapActor->GetPointCloudComponent()->PointSize = 0.05;
 	}
 
+	// Now set the local map actor point sizes
 	DynamicActor->GetPointCloudComponent()->PointSize = 1;
 	DynamicActorInterlaced->GetPointCloudComponent()->PointSize = 1;
 
-
-
-	// Now we need to import the local maps
-	//FString directoryToSearch = TEXT("C:\\Users\\admin\\Desktop\\Sequence_Cudal");
-	UE_LOG(LogTemp, Warning, TEXT("THE VALUE OF LoadOne IS %d"), LoadOne);
+	// Now we need to import the local maps, however we ONLY do this if we are in
+	// playback mode.
+	// UE_LOG(LogTemp, Warning, TEXT("THE VALUE OF LoadOne IS %d"), LoadOne);
 	if (!LoadOne)
 	{
+		// We are in playback mode
 
+		// Extract from config the local point cloud search path
 		std::string LocalPath = toml::find<std::string>(loading, "local_name");
 		std::filesystem::path FullLocalPath = DataPath;
 		FullLocalPath /= LocalPath;
-
 		FString directoryToSearch = FString(FullLocalPath.c_str());
-		//FString directoryToSearch = TEXT("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin\\Data\\Local Point Clouds");
+		
+		// Specify the file patterns to extract
 		FString filesStartingWith = TEXT("");
 		FString fileExtensions = TEXT("las");
 
@@ -172,16 +181,19 @@ void ADynamicGameState::BeginPlay()
 	else
 	{
 		// We are loading only one point cloud
+		// Extract from config the path of the one file we are loading
 		std::string SingleName = toml::find<std::string>(loading, "single_name");
 		std::filesystem::path FullSingleName = DataPath;
 		FullSingleName /= SingleName;
 
+		// Add it to the point clouds array
 		LoadedPointClouds.Add(ULidarPointCloud::CreateFromFile(FString(FullSingleName.c_str())));
 
+		// We don't read any timestamp values; instead, we simply set the time to zero
+		// to prevent an error
 		TimeStamp.Add(0.0);
 		ClockTime = TimeStamp[0];
 	}
-
 
 	// Search for all landscape components
 	TArray<AActor*> FoundLandscapeStreamingProxy;
@@ -212,18 +224,21 @@ void ADynamicGameState::BeginPlay()
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
 	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
 
+	// Set the global map if we are configured to do that
 	if (GlobalMap)
 	{
 		// Set the point clouds first
 		GlobalMapActor->SetPointCloud(GlobalMap);
+
+		// Set the colour to white
 		SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
+		
+		// Locate the global map correctly
 		GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
 
 		// Correction to ensure odometry-global map alignment
 		GlobalMapActor->SetActorRotation(FRotator(PitchCorrection, YawCorrection, RollCorrection));
 	}
-
-	
 
 }
 
@@ -281,16 +296,26 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 
 	g_num_mutex.lock();
 
+	// Immediately load the single point cloud if we are in that mode
+	// The SingleCloudLoaded flag will be to limit the number of times we
+	// reload the point cloud since doing it every tick will result in 
+	// "flashiness" 
 	if (LoadOne && SingleCloudLoaded > 0)
 	{
+		// Load the point cloud at origin with no rotation
 		LoadNext(FVector(0, 0, 0), 0, FRotator(0, 0, 0), DynamicActor);
+		
+		// Decrement the loading counter by one
 		SingleCloudLoaded -= 1;
 	}
 
+	// Get the controlled instance of VRCharacter
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
 	AVrCharacter* ControlledCharacter = (AVrCharacter*)FoundActors[0];
 
+	// Extract from config the "exposure" parameter and set the corresponding
+	// member variable in the VRCharacter
 	double Exposure = toml::find<double>(params, "exposure");
 	ControlledCharacter->Exposure = Exposure;
 
@@ -304,20 +329,14 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 		PlaybackSpeed = PlaybackSpeedConfigured;
 	}
 
-	// The GameState itself doesn't actually do anything on each tick
-	// Instead, the VRCharacter controls what is displayed
-	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
-
 	// Local tracking of passed time
 	ClockTime += DeltaSeconds * PlaybackSpeed;
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
-
-
 	// Hide all actors within 1 m of the camera
 
-	TFunction<void(FLidarPointCloudPoint* Point)> pFuncRef = [this](FLidarPointCloudPoint* Point) { HidePoint(Point); };
+	// TFunction<void(FLidarPointCloudPoint* Point)> pFuncRef = [this](FLidarPointCloudPoint* Point) { HidePoint(Point); };
 	if (DynamicActor)
 	{
 		DynamicActor->GetPointCloudComponent()->SetVisibilityOfPointsInSphere(false, FSphere(ControlledCharacter->GetActorLocation(), 150.0));
