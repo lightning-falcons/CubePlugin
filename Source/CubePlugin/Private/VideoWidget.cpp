@@ -33,6 +33,12 @@ void UVideoWidget::NativeConstruct()
 		// We start from the first image
 		ImageIndex = 0;
 	}
+	else
+	{
+		// If photos not imported, hide the widget
+		CurrentVisibility = ESlateVisibility::Hidden;
+		Image->SetVisibility(CurrentVisibility);
+	}
 	
 }
 

@@ -227,6 +227,15 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Input")
 	void ClockwiseRotation(const FInputActionValue& Value);
 
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ForwardOffset(const FInputActionValue& Value, FVector ForwardVector);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void BackOffset(const FInputActionValue& Value, FVector ForwardVector);
+
+	UFUNCTION(BlueprintCallable, Category = "Input")
+	void ResetLocation(const FInputActionValue& Value);
+
 
 public:
 	
@@ -255,6 +264,9 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = Camera)
 	bool LoadOne;
 
+	UPROPERTY(EditAnywhere, BluePrintReadOnly)
+	FVector VectorOffset = FVector(0.0, 0.0, 0.0);
+
 
 private:
 
@@ -266,7 +278,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	double OrthogonalY = 0.0;
 
-
+	
 
 
 };

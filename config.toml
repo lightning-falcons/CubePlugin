@@ -36,7 +36,7 @@ roll_correction = -0.29
 [VR_Parameters]
 
 # The number of TOTAL imported frames
-number_frames = 30
+number_frames = 200
 
 # The height that the bird's eye view is set to this
 # The units must be in CENTIMETRES
@@ -47,7 +47,7 @@ height_birds = 10000.0
 import_every = 1
 
 # Playback at this times the realtime speed
-playback_speed = 0.05
+playback_speed = 0.1
 
 # Display points at these sizes when in road or bird's eye view
 local_ground_size = 0.5
@@ -58,16 +58,15 @@ global_bird_size = 0.1
 
 # Whether photos are imported for the video playback
 # This must be set to false if there are no images available
-photo_import = false
+photo_import = true
 
 # Set the camera exposure (lower value means brighter)
 exposure = 0.1
 # exposure = 0.6
 
 # Whether we wish to load a global map
-load_global = false
+load_global = true
 
 # Mode for whether we want to load just a single point cloud
 # If true, load_global and photo_import must both be set to false
-load_one = true
-
+load_one = false

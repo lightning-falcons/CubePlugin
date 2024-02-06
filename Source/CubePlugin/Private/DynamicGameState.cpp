@@ -334,7 +334,7 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME STATE TICK %lf %lf %f"), ClockTime, TimeStamp[ScanIndex], DeltaSeconds);
 
-	// Hide all actors within 1 m of the camera
+	// Hide all actors within 1.5 m of the camera
 
 	// TFunction<void(FLidarPointCloudPoint* Point)> pFuncRef = [this](FLidarPointCloudPoint* Point) { HidePoint(Point); };
 	if (DynamicActor)
@@ -347,7 +347,7 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 		DynamicActorInterlaced->GetPointCloudComponent()->SetVisibilityOfPointsInSphere(false, FSphere(ControlledCharacter->GetActorLocation(), 150.0));
 	}
 
-
+	// Set the global map point size based on the current view type
 	if (ControlledCharacter->CurrentView == BIRDVIEW)
 	{
 		GlobalMapActor->GetPointCloudComponent()->PointSize = GlobalBirdSize;
@@ -357,6 +357,7 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 		GlobalMapActor->GetPointCloudComponent()->PointSize = GlobalGroundSize;
 	}
 
+	// Rewind only matters if we are in playback mode
 	if (!LoadOne)
 	{
 
@@ -376,6 +377,7 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 			GEngine->ForceGarbageCollection();
 			*/
 
+			// Go back to the start of the playback
 			ResetSimulation();
 		}
 	}

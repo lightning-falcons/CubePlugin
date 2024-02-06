@@ -540,6 +540,8 @@ void AVrCharacter::Tick(float DeltaTime)
 				// Only update the character location if they are supposed to be moving
 				SetActorLocation(LocationEarly + ProportionThrough * (LocationLate - LocationEarly));
 				AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
+				AddActorWorldOffset(VectorOffset);
+
 
 			}
 		}
@@ -558,7 +560,8 @@ void AVrCharacter::Tick(float DeltaTime)
 	else
 	{
 		SetActorLocation(FVector(0, 0, 190.0 + ZAdjustment));
-		AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
+		// AddActorLocalOffset(FVector(0, OrthogonalX, OrthogonalY));
+		AddActorWorldOffset(VectorOffset);
 	}
 	
 
@@ -997,6 +1000,46 @@ void AVrCharacter::ClockwiseRotation(const FInputActionValue& Value)
 	if (CurrentValue)
 	{
 		AddedRotationAngle += 10.0;
+	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
+}
+
+void AVrCharacter::ForwardOffset(const FInputActionValue& Value, FVector ForwardVector)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		VectorOffset += ForwardVector * 10.0;
+		AddActorWorldOffset(ForwardVector * 10.0);
+
+	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
+
+}
+
+void AVrCharacter::BackOffset(const FInputActionValue& Value, FVector ForwardVector)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		VectorOffset -= ForwardVector * 10.0;
+		AddActorWorldOffset( -ForwardVector * 10.0);
+	}
+
+	// Refresh the position whenever the location changes
+	ImmediateReload = true;
+}
+
+void AVrCharacter::ResetLocation(const FInputActionValue& Value)
+{
+	const bool CurrentValue = Value.Get<bool>();
+	if (CurrentValue)
+	{
+		VectorOffset = FVector(0, 0, 0);
 	}
 
 	// Refresh the position whenever the location changes
