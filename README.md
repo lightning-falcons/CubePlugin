@@ -126,6 +126,9 @@ LiBACK incorporates a large number of convenient VIVE controller input and keybo
 
 You may wish to note additionally that all objects within a fixed radius of the camera are hidden to prevent obstruction of the camera.
 
+### Single Playback Mode
+Display of a single pointcloud is supported. The main playback code is not designed to handle a very small number of point clouds; instead, when only a single point cloud is to be loaded, the `load one` flag should be set to `true` in the config file.
+
 ### Using the package
 1. Ensure that SteamVR is turned on and the headset and controllers are properly connected and paired.
 2. Write the config file, ensuring all paths are correct for the computer on which the exectuable will be run.
