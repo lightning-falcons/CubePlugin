@@ -30,10 +30,12 @@ The following configuration file (config.toml) is an example of what could be us
 [Loading]
 
 # The path to the folder containing the simulation data
-data_path = "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\Data"
+data_path = "C:\\Users\\its\\Desktop\\Data"
+# data_path = "C:\\Users\\its\\Desktop\\Chippendale"
 
 # The name of the odometry file
 odometry_name = "Odometry5.csv"
+# odometry_name = "Odometry2.csv'
 
 # The name of the global point cloud
 global_name = "Global Point Cloud.las"
@@ -43,6 +45,9 @@ local_name = "Local Point Clouds"
 
 # The name of the folder containing the images
 image_name = "Images"
+
+# If load_one is set to true, this is the single point cloud that is loaded
+single_name = "Local Point Clouds\\1688451456.986476606.las"
 
 # Correction angle for the global map PITCH in degrees
 pitch_correction = 0.00
@@ -56,7 +61,7 @@ roll_correction = -0.29
 [VR_Parameters]
 
 # The number of TOTAL imported frames
-number_frames = 1000
+number_frames = 3000
 
 # The height that the bird's eye view is set to this
 # The units must be in CENTIMETRES
@@ -67,10 +72,11 @@ height_birds = 10000.0
 import_every = 1
 
 # Playback at this times the realtime speed
-playback_speed = 0.5
+playback_speed = 0.2
 
 # Display points at these sizes when in road or bird's eye view
-local_ground_size = 0.5
+# local_ground_size = 0.5
+local_ground_size = 1.0
 local_bird_size = 0.5
 global_ground_size = 0.05
 global_bird_size = 0.1
@@ -81,6 +87,14 @@ photo_import = true
 
 # Set the camera exposure (lower value means brighter)
 exposure = 0.1
+# exposure = 0.6
+
+# Whether we wish to load a global map
+load_global = true
+
+# Mode for whether we want to load just a single point cloud
+# If true, load_global and photo_import must both be set to false
+load_one = false
 ```
 
 ## Usage Instructions
@@ -108,6 +122,7 @@ LiBACK incorporates a large number of convenient VIVE controller input and keybo
 | Trackpad Down (L) | S | Move the camera backwards by one metre (i.e in the opposite direction as the camera is facing). |
 | Trackpad Left (L) | A | Move the camera left by one metre (local reference frame). |
 | Trackpad Right (L) | D | Move the camera right by one metre (local reference frame). |
+| Grip (L or R) | | Reset the camera location to the car location. |
 
 You may wish to note additionally that all objects within a fixed radius of the camera are hidden to prevent obstruction of the camera.
 
