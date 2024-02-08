@@ -11,6 +11,8 @@ Despite what the UE5 project name suggests, LiBACK (CubePlugin) is not in fact a
 
 LiBACK was only tested on the HTC VIVE headset. However, after enabling the appropriate UE5 plugins, use with other headsets should be possible. The specifications on which the test was performed: Windows 11, RTX 4090 GPU, i9-14900KF processor, 64 GB RAM. Set the configuration file appropriately according to your hardware availabilities.
 
+LiBACK packaging has been tested successfully for Windows. We recommend not packaging any of the data files and instead to store them elsewhere on the computer. Their paths can be accessed from the config file.
+
 ## Example
 The following images are screenshots of the VR playback of point clouds in Chippendale and Katoomba as viewed on the computer screen. The Chippendale dataset has real-to-life colour incoporated in the point clouds.
 
@@ -82,6 +84,9 @@ exposure = 0.1
 ```
 
 ## Usage Instructions
+### Pop-up inputs
+If the packaged executable is run, there will be two sequential pop-ups. The first pop-up is a file selector dialog which allows you to select the location of the **config file**, which is the file that will specify the location of everything else. The second pop-up is the playback speed ratio (ratio to the real-life speed), which should be entered as a floating point number. Please note that the number entered here overrides what is specified in the config file.
+
 ### The Head Mounted Display
 The Head Mounted Display (HMD) of the VIVE headset determines the orientation of the camera in the scene, *relative* to the direction of motion of the data collection device (such as a vehicle). Therefore, if the data collection device is rotated, the orientation of the camera will also be rotated in exactly the same way, assuming the headset does not move. The location of the camera is initially at the location of the data collection device. This gives the VR user the experience that they are travelling "in" or "on" the data collection device. To play in VR mode, the "VR Preview" play mode should be chosen, and the HMD will display the scene as shown on the device running the code. The HMD controls the orientation of the camera.
 
@@ -90,7 +95,7 @@ Please note that the HMD needs to be detected by the VR sensor units in order to
 The *position* of the HMD also controls the position of the character relative to their "nominal" location. Therefore, walking around the room has the same physical effect as walking around the (moving) VR world.
 
 ### VIVE Controller and Keyboard Controls
-LiBACK incorporates a large number of convenient VIVE controller input and keyboard shortcuts during runtime (while the playback is in progress) to access certain functionality. The functionality that is included was selected on the basis of user experience, comfort, and scene reproduction and interrogation. If available, we recommend using the controller instead of the keyboard as it offers a more comfortable experience. The controllers, when appropriately paired, will appear as a pair of glowing hands. Hold each controller in the correct hand.
+LiBACK incorporates a large number of convenient VIVE controller input and keyboard shortcuts during runtime (while the playback is in progress) to access certain functionality. The functionality that is included was selected on the basis of user experience, comfort, and scene reproduction and interrogation. If available, we recommend using the controller instead of the keyboard as it offers a more comfortable experience. The controllers, when appropriately paired, will appear as a pair of glowing hands. Hold each controller in the correct hand. *Please note: The development of controller input has been prioritised over keyboard input. You are highly recommended to use the controller as the keyboard controls have not been as thoroughly tested.*
 
 | Controller Input (Left or Right Controller)| Key | Description |
 | --- | --- | --- |
@@ -99,12 +104,17 @@ LiBACK incorporates a large number of convenient VIVE controller input and keybo
 | Trackpad Left (R)| &#8592; | Wind back time by one second (real-life time, regardless of the playback speed). If the beginning of the data is reached, the starting scene will be displayed until the display time of subsequent data is reached. |
 | Trackpad Right (R)| &#8594; | Wind forward time by one second (real-life time, regardless of the playback speed). If the end of the data is reached, the playback will re-start from the beginning. |
 | Trackpad Up (R)| V | Toggle the visibility of the video. |
-| Trackpad Up (L) | W | Move the camera upwards by one metre. |
-| Trackpad Down (L) | S | Move the camera down by one metre. |
-| Trackpad Left (L) | A | Move the camera left by one metre. |
-| Trackpad Right (L) | D | Move the camera right by one metre. |
+| Trackpad Up (L) | W | Move the camera forwards by one metre (i.e in the direction the camera is facing). |
+| Trackpad Down (L) | S | Move the camera backwards by one metre (i.e in the opposite direction as the camera is facing). |
+| Trackpad Left (L) | A | Move the camera left by one metre (local reference frame). |
+| Trackpad Right (L) | D | Move the camera right by one metre (local reference frame). |
 
 You may wish to note additionally that all objects within a fixed radius of the camera are hidden to prevent obstruction of the camera.
+
+### Using the package
+1. Ensure that SteamVR is turned on and the headset and controllers are properly connected and paired.
+2. Write the config file, ensuring all paths are correct for the computer on which the exectuable will be run.
+3. Run the CubePlugin executable, and specify the location of the config file when the prompt appears
 
 ### Installation Instructions (Windows 11)
 1. Go to [Download Unreal Engine](https://www.unrealengine.com/en-US/download) and following instructions to install UE 5.3.2
