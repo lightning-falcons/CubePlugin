@@ -8,7 +8,7 @@ public class CubePlugin : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "LidarPointCloudRuntime", });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", /*"LidarPointCloudRuntime",*/ });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
@@ -33,9 +33,10 @@ public class CubePlugin : ModuleRules
         PublicIncludePaths.AddRange(
             new string[] {
 				// ... add public include paths required here ...
-				"..\\Plugins\\Enterprise\\LidarPointCloud\\Source\\LidarPointCloudRuntime\\Public",
+				// "..\\Plugins\\Enterprise\\LidarPointCloud\\Source\\LidarPointCloudRuntime\\Public",
                 // "C:\\Users\\its\\Downloads\\toml11-master\\toml11-master",
                 "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\toml11-master",
+                "C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\tinyfiledialogs-current",
             }
             );
 
@@ -66,8 +67,8 @@ public class CubePlugin : ModuleRules
             {
                 "Projects",
                 "InputCore",
-                "EditorFramework",
-                "UnrealEd",
+                // "EditorFramework",
+                // "UnrealEd",
                 "ToolMenus",
                 "CoreUObject",
                 "Engine",

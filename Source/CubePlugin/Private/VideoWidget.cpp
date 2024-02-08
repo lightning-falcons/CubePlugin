@@ -6,6 +6,7 @@ void UVideoWidget::NativeConstruct()
 	
 	Super::NativeConstruct();
 
+	// Only action the code if we are in video playing mode
 	if (GetWorld()->GetGameState<ADynamicGameState>()->PhotoImport)
 	{
 		// Import all the textures
@@ -46,6 +47,7 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
+	// Only action the code if we are in video playing mode
 	if (GetWorld()->GetGameState<ADynamicGameState>()->PhotoImport)
 	{
 		// Get the clock time as stored by the game state
@@ -85,6 +87,7 @@ void UVideoWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 void UVideoWidget::SetTime(double Time)
 {
 
+	// Only action the code if we are in video playing mode
 	if (GetWorld()->GetGameState<ADynamicGameState>()->PhotoImport)
 	{
 		// Find out what the current time is
@@ -100,7 +103,7 @@ void UVideoWidget::SetTime(double Time)
 		{
 			// We need to go back in time
 
-			// Need to change the ScanIndex (which will then set the position)
+			// Need to change the ImageIndex (which will then set the image shown)
 			while (Time < TimeStamp[ImageIndex] && ImageIndex > 0)
 			{
 				ImageIndex -= 1;
@@ -108,6 +111,8 @@ void UVideoWidget::SetTime(double Time)
 		}
 		else if (Time > CurrentTime)
 		{
+
+			// Need to change the ImageIndex
 			while (Time > TimeStamp[ImageIndex] && ImageIndex < TimeStamp.Num() - 1)
 			{
 				ImageIndex += 1;
@@ -119,6 +124,8 @@ void UVideoWidget::SetTime(double Time)
 
 void UVideoWidget::ToggleVisibility()
 {
+
+	// Change the value of the current visibility variable
 	if (CurrentVisibility == ESlateVisibility::Hidden)
 	{
 		CurrentVisibility = ESlateVisibility::Visible;
@@ -128,5 +135,6 @@ void UVideoWidget::ToggleVisibility()
 		CurrentVisibility = ESlateVisibility::Hidden;
 	}
 
+	// Set the visibility according to the variable
 	Image->SetVisibility(CurrentVisibility);
 }

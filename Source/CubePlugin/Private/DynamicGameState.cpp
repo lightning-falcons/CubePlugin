@@ -3,6 +3,7 @@
 
 #include "DynamicGameState.h"
 #include "VrCharacter.h"
+#include "tinyfiledialogs.cpp"
 
 #include <iostream>
 #include <sstream>
@@ -15,9 +16,72 @@ ADynamicGameState::ADynamicGameState()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	// Read the config file
-	data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\config.toml");
 	
+	char const* lFilterPatterns[1] = { "*.toml" };
+
+	// Only ever ask for the file and play back speed once
+	if (!IsInitialized)
+	{
+
+		UE_LOG(LogTemp, Warning, TEXT("REACHED INITIALIZATION OF GAME STATE"));
+
+		tinyfd_beep();
+
+		const char* SelectedFile = tinyfd_openFileDialog( // there is also a wchar_t version
+			"Select file", // title
+			"C:\\", // optional initial directory
+			1, // number of filter patterns
+			lFilterPatterns, // char const * lFilterPatterns[2] = { "*.txt", "*.jpg" };
+			NULL, // optional filter description
+			0 // forbid multiple selections
+		);
+
+		selection = std::string(SelectedFile);
+
+		// Read the config file
+		// data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\Content\\Config\\config.toml");
+		data = toml::parse(selection);
+		loading = toml::find(data, "Loading");
+		params = toml::find(data, "VR_Parameters");
+
+		// Extract from config the desired playback speed ratio
+		PlaybackSpeed = toml::find<double>(params, "playback_speed");
+
+
+		char const* aTitle = "Update the playback speed (Ratio to Realtime)";
+		char const* aMessage = "Make sure the input is a floating point number.";
+
+		std::ostringstream strs;
+		strs << PlaybackSpeed;
+		char const* aDefaultInput = strs.str().c_str();
+
+		tinyfd_beep();
+
+		char const* output = tinyfd_inputBox(
+			aTitle, /* NULL or "" */
+			aMessage, /* NULL or "" (\n and \t have no effect) */
+			aDefaultInput);  /* NULL = passwordBox, "" = inputbox */
+		/* returns NULL on cancel */
+
+		PlaybackSpeed = atof(output);
+
+		// Store a copy of the original (configured) playback speed, in case we make
+		// any changes to the actual playback speed
+		PlaybackSpeedConfigured = PlaybackSpeed;
+
+		IsInitialized = true;
+
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("AFTER INITIALIZATION OF GAME STATE"));
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *selection.c_str());
+
+
+
+	// Read the config file
+	// data = toml::parse("C:\\Users\\its\\Documents\\Unreal Projects\\CubePlugin 5.3\\Content\\Config\\config.toml");
+	data = toml::parse(selection);
+
 	// Separate the loading and VR parameters sections
 	loading = toml::find(data, "Loading");
 	params = toml::find(data, "VR_Parameters");
@@ -26,12 +90,6 @@ ADynamicGameState::ADynamicGameState()
 	// Extract from config the number of frames we need to load
 	NumberFrames = toml::find<int>(params, "number_frames");
 
-	// Extract from config the desired playback speed ratio
-	PlaybackSpeed = toml::find<double>(params, "playback_speed");
-
-	// Store a copy of the original (configured) playback speed, in case we make
-	// any changes to the actual playback speed
-	PlaybackSpeedConfigured = PlaybackSpeed;
 
 	// Extract from config the downsampling factor
 	DownSamplePer = toml::find<int>(params, "import_every");
@@ -309,6 +367,24 @@ void ADynamicGameState::Tick(float DeltaSeconds)
 		SingleCloudLoaded -= 1;
 	}
 
+	// Set the global map if we are configured to do that
+	if (GlobalMap && LoadingCounter > 0)
+	{
+		// Set the point clouds first
+		GlobalMapActor->SetPointCloud(GlobalMap);
+
+		// Set the colour to white
+		SetColor(FColor(255, 255, 255, 0.5), GlobalMap);
+
+		// Locate the global map correctly
+		GlobalMap->SetLocationOffset(GlobalMap->OriginalCoordinates);
+
+		// Correction to ensure odometry-global map alignment
+		GlobalMapActor->SetActorRotation(FRotator(PitchCorrection, YawCorrection, RollCorrection));
+
+		LoadingCounter -= 1;
+	}
+
 	// Get the controlled instance of VRCharacter
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AVrCharacter::StaticClass(), FoundActors);
@@ -463,7 +539,7 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 
 	UE_LOG(LogTemp, Warning, TEXT("ARRAY TRACKER %d, %d"), Index, LoadedPointClouds.Num());
 
-	try {
+	// try {
 
 		if (LoadedPointClouds[Index]->IsFullyLoaded() != true)
 		{
@@ -504,10 +580,10 @@ void ADynamicGameState::LoadNext( FVector CharacterLocation, int Index, FRotator
 
 		
 	
-	} catch ( ... ) {
+	/* } catch (...) {
 		UE_LOG(LogTemp, Warning, TEXT("CAUGHT"));
 		// nothing 
-	}
+	}*/
 
 	// Set the parameters for the local point cloud
 	PointCloudActor->GetPointCloudComponent()->IntensityInfluence = 0.9;
@@ -542,6 +618,8 @@ void ADynamicGameState::SetColor(FColor AppliedColor, ULidarPointCloud* Map)
 	// Apply the colour
 	GlobalMap->ApplyColorToAllPoints(AppliedColor, ApplyLimited);
 
+	
+
 	// Get the individual points
 	GlobalMap->GetPoints(Points);
 
@@ -557,6 +635,7 @@ void ADynamicGameState::SetColor(FColor AppliedColor, ULidarPointCloud* Map)
 	// Clear the points array
 	Points.Empty();
 
+	
 }
 
 void ADynamicGameState::SetTime(double Time)
@@ -602,6 +681,10 @@ void ADynamicGameState::ResetSimulation()
 	SetTime(TimeStamp[0]);
 	UVideoWidget* VideoWidgetFound = (UVideoWidget*)ControlledCharacter->ItemReferences2[0];
 	VideoWidgetFound->SetTime(TimeStamp[0]);
+
+	// Make a noise to indicate resetting
+	tinyfd_beep();
+
 }
 
 void ADynamicGameState::HidePoint(FLidarPointCloudPoint* Point)

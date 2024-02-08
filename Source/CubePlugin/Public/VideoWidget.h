@@ -47,6 +47,7 @@ public:
 	// Toggle between video hidden and visible
 	void ToggleVisibility();
 
+	// Flag to reset the current image, usually after changing the image index
 	bool ImmediateReload = false;
 
 };

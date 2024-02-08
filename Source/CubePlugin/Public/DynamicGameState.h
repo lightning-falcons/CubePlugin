@@ -6,7 +6,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/Actor.h"
 #include "Engine/Engine.h"
-#include "Editor/EditorEngine.h"
+// #include "Editor/EditorEngine.h"
 #include "Misc/MessageDialog.h"
 #include "ToolMenus.h"
 #include "UObject/Object.h"
@@ -16,7 +16,7 @@
 #include "Components/LightComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/PostProcessVolume.h"
-#include "Editor/EditorEngine.h"
+// #include "Editor/EditorEngine.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/World.h"
 
@@ -33,9 +33,13 @@
 #include "Engine/Light.h"
 #include "Engine/DirectionalLight.h"
 #include "Camera/CameraActor.h"
+#include "tinyfiledialogs.h"
+#include <stdio.h>
+#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <string>
 
 // Meed to avoid macro conflict
 #pragma push_macro("check")   // store 'check' macro current definition
@@ -154,8 +158,10 @@ public:
 	std::filesystem::path FullOdometryPath; // Full path to the odometry file
 	std::filesystem::path FullImagePath; // Full path to the image folder
 
-	double PlaybackSpeed; // Playback speed as a multiple of normal
-	double PlaybackSpeedConfigured; // Playback speed as configured by the config file
+	inline static std::string selection = ""; // 
+	inline static bool IsInitialized = false; // Only ask for the playback speed once
+	inline static double PlaybackSpeed = 1.0; // Playback speed as a multiple of normal
+	inline static double PlaybackSpeedConfigured = 1.0; // Playback speed as configured by the config file
 	int NumberFrames; // Number of frames to import
 	bool PhotoImport; // Whether the video should be played
 	double HeightBirds; // How high up the bird's eye view should be
@@ -194,6 +200,7 @@ public:
 	// We essentially attempt loading multiple times and this integer limits
 	// the number of attempts so we do not waste too many resources
 	int SingleCloudLoaded = 2;
+	int LoadingCounter = 5;
 
 	
 };
